@@ -29,7 +29,7 @@ const (
     //DefaultBufferSize ...
     DefaultBufferSize = 60 * 1000 // = 1000 requests / sec for 1 minute
     //DefaultPublishInterval ...
-    DefaultPublishInterval = 60 * time.Second // = 1 minute
+    DefaultPublishInterval = 1 * time.Second // = 1 minute
     //DefaultActiveRequestsCountTimeout ...
     DefaultActiveRequestsCountTimeout = 60 * time.Second
     //DefaultFailureCountSlidingWindowInterval ...
@@ -157,10 +157,9 @@ func (o *Stats) DecrementActiveRequestsCount() {
 }
 
 //GetActiveRequestsCount ...
-func (o *Stats) GetActiveRequestsCount() int64 {
+func (o *Stats) GetActiveRequestsCount(currentTime time.Duration) int64 {
     count := atomic.LoadInt64(&o.activeRequestsCount)
 
-    currentTime := time.Duration(time.Now().UnixNano())
     if currentTime - o.lastActiveRequestsCountChangeTimestamp > o.ActiveRequestsCountTimeout || count < 0 {
         atomic.StoreInt64(&o.activeRequestsCount, 0)
         return 0
@@ -226,8 +225,7 @@ func (o *Stats)getCircuitBreakerTimeout() time.Duration {
 }
 
 //IsCircuitBreakerTripped ...
-func (o *Stats)IsCircuitBreakerTripped() bool {
-    currentTime := time.Duration(time.Now().UnixNano())
+func (o *Stats)IsCircuitBreakerTripped(currentTime time.Duration) bool {
     circuitBreakerTimeout := o.getCircuitBreakerTimeout()
     if circuitBreakerTimeout <= 0 {
         return false
