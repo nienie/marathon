@@ -5,9 +5,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/nienie/marathon/config"
 	"github.com/nienie/marathon/server"
 	"github.com/nienie/marathon/utils/cache"
-	"github.com/nienie/marathon/config"
 )
 
 const (
@@ -29,17 +29,17 @@ var (
 //of every Node/Server in the LaodBalancer. This information can be used to just observe and understand the runtime
 //behavior of the loadbalancer or more importantly for the basis that determines the loadbalacing strategy
 type Stats struct {
-	Name                          string
-	ConnectionFailureThreshold    int
-	CircuitTrippedTimeoutFactor   int
-	MaxCircuitTrippedTimeout      time.Duration
-	ServerStatsCacheExpireTime    time.Duration
+	Name                        string
+	ConnectionFailureThreshold  int
+	CircuitTrippedTimeoutFactor int
+	MaxCircuitTrippedTimeout    time.Duration
+	ServerStatsCacheExpireTime  time.Duration
 
-	serverStatsCache              *cache.TimedCache
-	clusterStatsMap			      map[string]*ClusterStats
-	clusterStatsLock 			  sync.RWMutex
-	upServerClusterMap			  map[string][]*server.Server
-	serverClusterLock 			  sync.RWMutex
+	serverStatsCache   *cache.TimedCache
+	clusterStatsMap    map[string]*ClusterStats
+	clusterStatsLock   sync.RWMutex
+	upServerClusterMap map[string][]*server.Server
+	serverClusterLock  sync.RWMutex
 }
 
 type serverStatsCacheCallback struct {
@@ -74,18 +74,18 @@ func (o *serverStatsCacheCallback) OnRemove(key interface{}, val interface{}) er
 //NewLoadBalancerStats ...
 func NewLoadBalancerStats(clientConfig config.ClientConfig) *Stats {
 	loadBalancerStats := &Stats{
-		Name: 						   clientConfig.GetClientName(),
-		ConnectionFailureThreshold:    clientConfig.GetPropertyAsInteger(config.ConnectionFailureThreshold,
+		Name: clientConfig.GetClientName(),
+		ConnectionFailureThreshold: clientConfig.GetPropertyAsInteger(config.ConnectionFailureThreshold,
 			config.DefaultConnectionFailureThreshold),
-		CircuitTrippedTimeoutFactor:   clientConfig.GetPropertyAsInteger(config.CircuitTrippedTimeoutFactor,
+		CircuitTrippedTimeoutFactor: clientConfig.GetPropertyAsInteger(config.CircuitTrippedTimeoutFactor,
 			config.DefaultCircuitTrippedTimeoutFactor),
-		MaxCircuitTrippedTimeout:      clientConfig.GetPropertyAsDuration(config.CircuitTripMaxTimeout,
+		MaxCircuitTrippedTimeout: clientConfig.GetPropertyAsDuration(config.CircuitTripMaxTimeout,
 			config.DefaultCircuitTripMaxTimeout),
-		ServerStatsCacheExpireTime:    DefaultServerStatsCacheExpireTime,
-		clusterStatsMap:			   make(map[string]*ClusterStats),
-		clusterStatsLock:			   sync.RWMutex{},
-		upServerClusterMap:			   make(map[string][]*server.Server),
-		serverClusterLock:			   sync.RWMutex{},
+		ServerStatsCacheExpireTime: DefaultServerStatsCacheExpireTime,
+		clusterStatsMap:            make(map[string]*ClusterStats),
+		clusterStatsLock:           sync.RWMutex{},
+		upServerClusterMap:         make(map[string][]*server.Server),
+		serverClusterLock:          sync.RWMutex{},
 	}
 	callback := newServerStatsCacheCallback(loadBalancerStats)
 	loadBalancerStats.serverStatsCache = cache.NewTimedCache(loadBalancerStats.ServerStatsCacheExpireTime, callback)
@@ -196,7 +196,7 @@ func (o *Stats) GetAllServerStats() map[*server.Server]*server.Stats {
 }
 
 //GetClusterSnapshotByName ...
-func (o *Stats)GetClusterSnapshotByName(cluster string) *ClusterSnapshot {
+func (o *Stats) GetClusterSnapshotByName(cluster string) *ClusterSnapshot {
 	if len(cluster) == 0 {
 		return NewDefaultClusterSnapshot()
 	}
@@ -207,17 +207,17 @@ func (o *Stats)GetClusterSnapshotByName(cluster string) *ClusterSnapshot {
 }
 
 //GetClusterSnapshotByServers ...
-func (o *Stats)GetClusterSnapshotByServers(servers []*server.Server) *ClusterSnapshot {
+func (o *Stats) GetClusterSnapshotByServers(servers []*server.Server) *ClusterSnapshot {
 	if servers == nil || len(servers) == 0 {
 		return NewDefaultClusterSnapshot()
 	}
 	var (
-		instanceCount = len(servers)
-		activeConnectionsCount int64
+		instanceCount                           = len(servers)
+		activeConnectionsCount                  int64
 		activeConnectionsCountOnAvailableServer int64
-		circuitBreakerTrippedCount int
-		loadPerServer float64
-		currentTime = time.Duration(time.Now().UnixNano())
+		circuitBreakerTrippedCount              int
+		loadPerServer                           float64
+		currentTime                             = time.Duration(time.Now().UnixNano())
 	)
 	for _, svr := range servers {
 		stat := o.GetSingleServerStats(svr)
@@ -233,13 +233,13 @@ func (o *Stats)GetClusterSnapshotByServers(servers []*server.Server) *ClusterSna
 			loadPerServer = -1
 		}
 	} else {
-		loadPerServer = float64(activeConnectionsCountOnAvailableServer) / float64(instanceCount - circuitBreakerTrippedCount)
+		loadPerServer = float64(activeConnectionsCountOnAvailableServer) / float64(instanceCount-circuitBreakerTrippedCount)
 	}
 	return NewClusterSnapshot(instanceCount, loadPerServer, circuitBreakerTrippedCount, activeConnectionsCount)
 }
 
 //GetInstanceCount ...
-func (o *Stats)GetInstanceCount(cluster string) int {
+func (o *Stats) GetInstanceCount(cluster string) int {
 	if len(cluster) == 0 {
 		return 0
 	}
@@ -253,25 +253,25 @@ func (o *Stats)GetInstanceCount(cluster string) int {
 }
 
 //GetActiveRequestsCount ...
-func (o *Stats)GetActiveRequestsCount(cluster string) int64 {
+func (o *Stats) GetActiveRequestsCount(cluster string) int64 {
 	snapshot := o.GetClusterSnapshotByName(cluster)
 	return snapshot.ActiveRequestsCount
 }
 
 //GetActiveRequestsPerServer ...
-func (o *Stats)GetActiveRequestsPerServer(cluster string) float64 {
+func (o *Stats) GetActiveRequestsPerServer(cluster string) float64 {
 	snapshot := o.GetClusterSnapshotByName(cluster)
 	return snapshot.LoadPerServer
 }
 
 //GetCircuitBreakerTrippedCount ...
-func (o *Stats)GetCircuitBreakerTrippedCount(cluster string) int {
+func (o *Stats) GetCircuitBreakerTrippedCount(cluster string) int {
 	snapshot := o.GetClusterSnapshotByName(cluster)
 	return snapshot.CircuitTrippedCount
 }
 
 //GetMeasuredClusterHits ...
-func (o *Stats)GetMeasuredClusterHits(cluster string) int64 {
+func (o *Stats) GetMeasuredClusterHits(cluster string) int64 {
 	if len(cluster) == 0 {
 		return 0
 	}
@@ -290,7 +290,7 @@ func (o *Stats)GetMeasuredClusterHits(cluster string) int64 {
 }
 
 //GetAvailableClusters ...
-func (o *Stats)GetAvailableClusters() []string {
+func (o *Stats) GetAvailableClusters() []string {
 	clusters := make([]string, 0)
 	o.serverClusterLock.RLock()
 	for cluster := range o.upServerClusterMap {
@@ -300,7 +300,7 @@ func (o *Stats)GetAvailableClusters() []string {
 	return clusters
 }
 
-func (o *Stats)getClusterStats(cluster string) *ClusterStats {
+func (o *Stats) getClusterStats(cluster string) *ClusterStats {
 	o.clusterStatsLock.Lock()
 	clusterStats := o.clusterStatsMap[cluster]
 	if clusterStats == nil {
@@ -312,7 +312,7 @@ func (o *Stats)getClusterStats(cluster string) *ClusterStats {
 }
 
 //UpdateClusterServerMapping ...
-func (o *Stats)UpdateClusterServerMapping(m map[string][]*server.Server) {
+func (o *Stats) UpdateClusterServerMapping(m map[string][]*server.Server) {
 	newMap := make(map[string][]*server.Server)
 	clusters := make([]string, 0)
 	for key, val := range m {

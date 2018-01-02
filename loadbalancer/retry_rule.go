@@ -14,8 +14,8 @@ const (
 //RetryRule can be cascaded, this allows adding a retry logic to an existing Rule.
 type RetryRule struct {
 	BaseRule
-	SubRule       		Rule
-	maxRetryTimeout 	time.Duration
+	SubRule         Rule
+	maxRetryTimeout time.Duration
 }
 
 //NewRetryRule ...

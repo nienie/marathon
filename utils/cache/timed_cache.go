@@ -56,7 +56,7 @@ type janitor struct {
 	stop     chan bool
 }
 
-func (j *janitor)Run(c *TimedCache) {
+func (j *janitor) Run(c *TimedCache) {
 	j.stop = make(chan bool)
 	ticker := time.NewTicker(j.Interval)
 	defer ticker.Stop()
@@ -71,7 +71,7 @@ func (j *janitor)Run(c *TimedCache) {
 	}
 }
 
-func (j *janitor)Stop() {
+func (j *janitor) Stop() {
 	j.stop <- true
 }
 
@@ -103,14 +103,14 @@ func NewTimedCache(defaultExpireTime time.Duration, callback Callback) *TimedCac
 }
 
 //Set ...
-func (c *TimedCache)Set(key interface{}, val interface{}, expireTime time.Duration) error {
+func (c *TimedCache) Set(key interface{}, val interface{}, expireTime time.Duration) error {
 	c.Lock()
 	defer c.Unlock()
 	c.del(key)
 	return c.set(key, val, expireTime)
 }
 
-func (c *TimedCache)set(key interface{}, val interface{}, expireTime time.Duration) error {
+func (c *TimedCache) set(key interface{}, val interface{}, expireTime time.Duration) error {
 	item := &Item{
 		Object: val,
 	}
@@ -127,13 +127,13 @@ func (c *TimedCache)set(key interface{}, val interface{}, expireTime time.Durati
 }
 
 //Del ...
-func (c *TimedCache)Del(key interface{}) error {
+func (c *TimedCache) Del(key interface{}) error {
 	c.Lock()
 	defer c.Unlock()
 	return c.del(key)
 }
 
-func (c *TimedCache)del(key interface{}) error {
+func (c *TimedCache) del(key interface{}) error {
 	var err error
 	item, ok := c.items[key]
 	if !ok {
@@ -147,14 +147,14 @@ func (c *TimedCache)del(key interface{}) error {
 }
 
 //Get ...
-func (c *TimedCache)Get(key interface{}) (interface{}, error) {
+func (c *TimedCache) Get(key interface{}) (interface{}, error) {
 	c.RLock()
 	val, err := c.get(key)
 	c.RUnlock()
 	return val, err
 }
 
-func (c *TimedCache)get(key interface{}) (interface{}, error) {
+func (c *TimedCache) get(key interface{}) (interface{}, error) {
 	item, found := c.items[key]
 	if !found || item.Expired() {
 		return nil, errKeyNotExist
@@ -163,7 +163,7 @@ func (c *TimedCache)get(key interface{}) (interface{}, error) {
 }
 
 //GetAndSetWhenNotExisted ...
-func (c *TimedCache)GetAndSetWhenNotExisted(key interface{}) (interface{}, error) {
+func (c *TimedCache) GetAndSetWhenNotExisted(key interface{}) (interface{}, error) {
 	c.Lock()
 	defer c.Unlock()
 	val, err := c.getAndRefreshExpireTime(key)
@@ -182,13 +182,13 @@ func (c *TimedCache)GetAndSetWhenNotExisted(key interface{}) (interface{}, error
 }
 
 //GetAndRefreshExpireTime ...
-func (c *TimedCache)GetAndRefreshExpireTime(key interface{}) (interface{}, error) {
+func (c *TimedCache) GetAndRefreshExpireTime(key interface{}) (interface{}, error) {
 	c.Lock()
 	defer c.Unlock()
 	return c.getAndRefreshExpireTime(key)
 }
 
-func (c *TimedCache)getAndRefreshExpireTime(key interface{}) (interface{}, error) {
+func (c *TimedCache) getAndRefreshExpireTime(key interface{}) (interface{}, error) {
 	item, found := c.items[key]
 	if !found || item.Expired() {
 		return nil, errKeyNotExist
@@ -201,7 +201,7 @@ func (c *TimedCache)getAndRefreshExpireTime(key interface{}) (interface{}, error
 }
 
 //DelExpiredKeys ...
-func (c *TimedCache)DelExpiredKeys() {
+func (c *TimedCache) DelExpiredKeys() {
 	c.Lock()
 	defer c.Unlock()
 	for key, item := range c.items {
@@ -215,7 +215,7 @@ func (c *TimedCache)DelExpiredKeys() {
 }
 
 //ToMap ...
-func (c *TimedCache)ToMap() map[interface{}]interface{} {
+func (c *TimedCache) ToMap() map[interface{}]interface{} {
 	m := make(map[interface{}]interface{})
 	c.RLock()
 	defer c.RUnlock()
@@ -228,7 +228,7 @@ func (c *TimedCache)ToMap() map[interface{}]interface{} {
 }
 
 //Clear ...
-func (c *TimedCache)Clear() {
+func (c *TimedCache) Clear() {
 	c.Lock()
 	defer c.Unlock()
 	for key, item := range c.items {

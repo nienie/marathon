@@ -1,8 +1,8 @@
 package ping
 
 import (
-	"net/http"
 	"io/ioutil"
+	"net/http"
 
 	"github.com/nienie/marathon/server"
 )
