@@ -2,9 +2,8 @@ package timer
 
 import (
 	"runtime"
-	"time"
     "sync/atomic"
-    "sync"
+	"time"
 )
 
 //Task ...
@@ -16,10 +15,9 @@ type Task interface {
 //Timer ...
 type Timer struct {
 	Name      string
-	interval  time.Duration //ms
+	interval  time.Duration
 	stop      chan bool
     isRunning int32
-    sync.Once
 }
 
 //NewTimer ...
@@ -47,6 +45,7 @@ func (t *Timer) Schedule(task Task, period time.Duration) {
             for {
                 select {
                 case <-t.stop:
+                    t.isRunning = 0
                     return
                 case <-ticker.C:
                     task.Run()
@@ -58,9 +57,8 @@ func (t *Timer) Schedule(task Task, period time.Duration) {
 
 //Cancel ...
 func (t *Timer) Cancel() {
-    t.Do(
-        func() {
-            //stop the Timer, does not close the channel, to prevent a read from the channel succeeding incorrectly.
-            t.stop <- true
-        })
+    if t.isRunning > 0 {
+        //stop the Timer, does not close the channel, to prevent a read from the channel succeeding incorrectly.
+        t.stop <- true
+    }
 }

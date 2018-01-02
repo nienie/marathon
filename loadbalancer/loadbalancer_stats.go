@@ -7,6 +7,7 @@ import (
 
 	"github.com/nienie/marathon/server"
 	"github.com/nienie/marathon/utils/cache"
+	"github.com/nienie/marathon/config"
 )
 
 const (
@@ -70,20 +71,16 @@ func (o *serverStatsCacheCallback) OnRemove(key interface{}, val interface{}) er
 	return nil
 }
 
-//NewLoadBalanceStatsDefault ...
-func NewLoadBalanceStatsDefault(name string) *Stats {
-	return NewLoadBalancerStats(name, DefaultConnectionFailureThreshold,
-		DefaultCircuitTrippedTimeoutFactor, DefaultCircuitTripMaxTimeout)
-}
-
 //NewLoadBalancerStats ...
-func NewLoadBalancerStats(name string, connectionFailureThreshold, circuitTrippedTimeoutFactor int,
-	maxCircuitTrippedTimeout time.Duration) *Stats {
+func NewLoadBalancerStats(clientConfig config.ClientConfig) *Stats {
 	loadBalancerStats := &Stats{
-		Name: 						   name,
-		ConnectionFailureThreshold:    connectionFailureThreshold,
-		CircuitTrippedTimeoutFactor:   circuitTrippedTimeoutFactor,
-		MaxCircuitTrippedTimeout:      maxCircuitTrippedTimeout,
+		Name: 						   clientConfig.GetClientName(),
+		ConnectionFailureThreshold:    clientConfig.GetPropertyAsInteger(config.ConnectionFailureThreshold,
+			config.DefaultConnectionFailureThreshold),
+		CircuitTrippedTimeoutFactor:   clientConfig.GetPropertyAsInteger(config.CircuitTrippedTimeoutFactor,
+			config.DefaultCircuitTrippedTimeoutFactor),
+		MaxCircuitTrippedTimeout:      clientConfig.GetPropertyAsDuration(config.CircuitTripMaxTimeout,
+			config.DefaultCircuitTripMaxTimeout),
 		ServerStatsCacheExpireTime:    DefaultServerStatsCacheExpireTime,
 		clusterStatsMap:			   make(map[string]*ClusterStats),
 		clusterStatsLock:			   sync.RWMutex{},

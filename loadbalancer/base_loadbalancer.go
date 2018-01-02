@@ -8,6 +8,7 @@ import (
     "github.com/nienie/marathon/loadbalancer/ping"
     "github.com/nienie/marathon/server"
     "github.com/nienie/marathon/utils/timer"
+    "github.com/nienie/marathon/config"
 )
 
 //BaseLoadBalancer ...
@@ -20,7 +21,6 @@ type BaseLoadBalancer struct {
     lbStats               *Stats
 
     pingInterval          time.Duration
-    maxTotalPingTime      time.Duration
 
     changeListeners       []server.ListChangeListener
     serverStatusListeners []server.StatusChangeListener
@@ -35,25 +35,23 @@ type BaseLoadBalancer struct {
 }
 
 //NewBaseLoadBalancer A basic implementation of the load balancer.
-func NewBaseLoadBalancer(name string, rule Rule, pingAction ping.Ping,
-pingStrategy ping.Strategy, lbStats *Stats) LoadBalancer {
+func NewBaseLoadBalancer(clientConfig config.ClientConfig, rule Rule, pingAction ping.Ping,
+    pingStrategy ping.Strategy) LoadBalancer {
     loadBalancer := &BaseLoadBalancer{
-        name:                  name,
+        name:                  clientConfig.GetClientName(),
         pingStrategy:          pingStrategy,
-        lbStats:               lbStats,
-        changeListeners:   make([]server.ListChangeListener, 0),
+        changeListeners:       make([]server.ListChangeListener, 0),
         serverStatusListeners: make([]server.StatusChangeListener, 0),
         allServersList:        make([]*server.Server, 0),
         upServersList:         make([]*server.Server, 0),
         allServerLock:         sync.RWMutex{},
         upServerLock:          sync.RWMutex{},
+        pingInterval:          clientConfig.GetPropertyAsDuration(config.PingInterval, config.DefaultPingInterval),
     }
     if loadBalancer.pingStrategy == nil {
         loadBalancer.pingStrategy = ping.NewSerialStrategy()
     }
-    if loadBalancer.lbStats == nil {
-        loadBalancer.lbStats = NewLoadBalanceStatsDefault(loadBalancer.name)
-    }
+    loadBalancer.lbStats = NewLoadBalancerStats(clientConfig)
     loadBalancer.SetRule(rule)
     loadBalancer.setupPingTask()
     return loadBalancer
@@ -62,9 +60,6 @@ pingStrategy ping.Strategy, lbStats *Stats) LoadBalancer {
 //SetName ...
 func (o *BaseLoadBalancer) SetName(name string) {
     o.name = name
-    if o.lbStats == nil {
-        o.lbStats = NewLoadBalanceStatsDefault(name)
-    }
     o.lbStats.Name = name
 }
 
@@ -148,10 +143,16 @@ func (o *BaseLoadBalancer) runPingTask() {
             newUpList = append(newUpList, svr)
         }
     }
-
-    o.upServerLock.Lock()
-    o.upServersList = newUpList
-    o.upServerLock.Unlock()
+    //no servers are alive, make them all be selected.
+    if len(newUpList) == 0 {
+        o.upServerLock.Lock()
+        o.upServersList = allServers
+        o.upServerLock.Unlock()
+    } else {
+        o.upServerLock.Lock()
+        o.upServersList = newUpList
+        o.upServerLock.Unlock()
+    }
 
     o.notifyServerStatusChangeListener(changeServers)
 }
@@ -183,19 +184,6 @@ func (o *BaseLoadBalancer) SetPingInterval(pingInterval time.Duration) {
 //GetPingInterval ...
 func (o *BaseLoadBalancer) GetPingInterval() time.Duration {
     return o.pingInterval
-}
-
-//SetMaxTotalPingTime ...
-func (o *BaseLoadBalancer) SetMaxTotalPingTime(maxTotalPingTime time.Duration) {
-    if maxTotalPingTime < time.Second * 1 {
-        return
-    }
-    o.maxTotalPingTime = maxTotalPingTime
-}
-
-//GetMaxTotalPingTime ...
-func (o *BaseLoadBalancer) GetMaxTotalPingTime() time.Duration {
-    return o.maxTotalPingTime
 }
 
 //AddServer Add a server to the 'allServer' list; does not verify uniqueness, so you
@@ -232,20 +220,22 @@ func (o *BaseLoadBalancer) SetServerList(serverList []*server.Server) {
         if o.changeListeners != nil && len(o.changeListeners) > 0 {
             oldList := server.CloneServerList(o.allServersList)
             newList := server.CloneServerList(allServers)
-            for _, listener := range o.changeListeners {
-                listener.ServerListChanged(oldList, newList)
-            }
+            o.notifyServerListChanged(oldList, newList)
         }
     }
-
+    o.allServerLock.Lock()
     o.allServersList = allServers
+    o.allServerLock.Unlock()
 
     if o.pingAction == nil {
         for _, s := range o.allServersList {
             s.SetAlive(true)
         }
 
+        o.upServerLock.Lock()
         o.upServersList = server.CloneServerList(allServers)
+        o.upServerLock.Unlock()
+        return
     }
 
     if listChanged {
