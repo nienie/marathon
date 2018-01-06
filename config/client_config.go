@@ -29,7 +29,7 @@ type ClientConfig interface {
 	//GetPropertyAsDuration ...
 	GetPropertyAsDuration(configKey string, defaultValue time.Duration) time.Duration
 
-	//Set ...
+	//SetProperty ...
 	SetProperty(configKey string, value interface{})
 }
 
@@ -38,20 +38,20 @@ type DefaultClientConfig struct {
 	InternalProperties *properties.Properties
 	ExternalProperties *properties.Properties
 	clientName         string
-	namespace          string
 }
 
 //NewDefaultClientConfig ...
-func NewDefaultClientConfig(props *properties.Properties) ClientConfig {
-	return &DefaultClientConfig{
+func NewDefaultClientConfig(clientName string, props *properties.Properties) *DefaultClientConfig {
+	if props == nil {
+		props = properties.NewProperties()
+	}
+	cfg := &DefaultClientConfig{
 		InternalProperties: properties.NewProperties(),
 		ExternalProperties: props,
+		clientName:         clientName,
 	}
-}
-
-//GetNamespace ...
-func (c *DefaultClientConfig) GetNamespace() string {
-	return c.namespace
+	cfg.LoadProperties(clientName)
+	return cfg
 }
 
 //SetClientName ...
@@ -100,7 +100,7 @@ func (c *DefaultClientConfig) LoadDefaultValues() {
 	c.putDefaultIntegerProperty(MaxConnectionsPerHost, DefaultMaxConnectionsPerHost)
 	c.putDefaultIntegerProperty(MaxTotalConnections, DefaultMaxTotalConnections)
 	c.putDefaultDurationProperty(ConnectTimeout, DefaultConnectTimeout)
-	c.putDefaultDurationProperty(ReadTimeout, DefaultReadTimeout)
+	c.putDefaultDurationProperty(ReadWriteTimeout, DefaultReadWriteTimeout)
 	c.putDefaultIntegerProperty(MaxAutoRetries, DefaultMaxAutoRetries)
 	c.putDefaultIntegerProperty(MaxAutoRetriesNextServer, DefaultMaxAutoRetriesNextServer)
 	c.putDefaultBoolProperty(OKToRetryOnAllOperations, DefaultOKToRetryOnAllOperations)
@@ -110,6 +110,10 @@ func (c *DefaultClientConfig) LoadDefaultValues() {
 	c.putDefaultIntegerProperty(CircuitTrippedTimeoutFactor, DefaultCircuitTrippedTimeoutFactor)
 	c.putDefaultDurationProperty(CircuitTripMaxTimeout, DefaultCircuitTripMaxTimeout)
 	c.putDefaultDurationProperty(PingInterval, DefaultPingInterval)
+	c.putDefaultStringProperty(PingStrategy, DefaultPingStrategy)
+	c.putDefaultStringProperty(LoadBalancerRule, DefaultLoadBalancerRule)
+	c.putDefaultStringProperty(LoadBalancerKey, DefaultLoadBalancerKey)
+	c.putDefaultDurationProperty(RequestTimeout, DefaultRequestTimeout)
 }
 
 //LoadProperties ...
@@ -119,7 +123,9 @@ func (c *DefaultClientConfig) LoadProperties(clientName string) {
 	props := c.ExternalProperties.FilterStripPrefix(clientName + ".")
 	for _, key := range props.Keys() {
 		value := props.GetString(key, "")
-		c.setPropertyInternal(key, value)
+		if len(value) > 0 {
+			c.setPropertyInternal(key, value)
+		}
 	}
 }
 
