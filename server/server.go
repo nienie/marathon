@@ -27,12 +27,13 @@ type Server struct {
 //NewServer create a server instance
 func NewServer(scheme string, host string, port int) *Server {
 	s := &Server{
-		scheme:      scheme,
-		host:        host,
-		port:        port,
-		id:          fmt.Sprintf(IDFormat, host, port),
-		isAliveFlag: false,
-		cluster:     ClusterUnknown,
+		scheme:       scheme,
+		host:         host,
+		port:         port,
+		id:           fmt.Sprintf(IDFormat, host, port),
+		isAliveFlag:  true,
+		readyToServe: true,
+		cluster:      ClusterUnknown,
 	}
 	return s
 }

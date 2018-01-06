@@ -1,5 +1,16 @@
 package server
 
+import (
+	"fmt"
+	"strconv"
+	"strings"
+)
+
+var (
+	//Delimiter ...
+	Delimiter = ","
+)
+
 //List Interface that defines the methods sed to obtain the List of Servers
 type List interface {
 	//GetInitialListOfServers ...
@@ -45,4 +56,57 @@ func CloneServerList(serverList []*Server) []*Server {
 	list := make([]*Server, len(serverList))
 	copy(list, serverList)
 	return list
+}
+
+//ParseServerListString convert a string like "http://127.0.0.1:8080@cluster1,http://localhost:8080@cluster2" into slice Server
+func ParseServerListString(svrListStr string) ([]*Server, error) {
+	if len(svrListStr) == 0 {
+		return nil, fmt.Errorf("empty string")
+	}
+
+	ret := make([]*Server, 0)
+	svrList := strings.Split(svrListStr, Delimiter)
+	for _, svr := range svrList {
+		if len(svr) == 0 {
+			continue
+		}
+
+		var (
+			scheme  string
+			host    string
+			port    int
+			cluster string
+		)
+
+		pos := strings.Index(svr, "://")
+		if pos != -1 {
+			scheme = svr[:pos]
+			svr = svr[pos+3:]
+		}
+
+		pos = strings.Index(svr, "@")
+		if pos != -1 {
+			cluster = svr[pos+1:]
+			svr = svr[:pos]
+		}
+
+		pos = strings.Index(svr, ":")
+		if pos != -1 {
+			s := svr[pos+1:]
+			p, err := strconv.ParseInt(s, 10, 32)
+			if err != nil {
+				return nil, err
+			}
+			port = int(p)
+			svr = svr[:pos]
+		}
+		host = svr
+
+		server := NewServer(scheme, host, port)
+		if len(cluster) != 0 {
+			server.SetCluster(cluster)
+		}
+		ret = append(ret, server)
+	}
+	return ret, nil
 }
