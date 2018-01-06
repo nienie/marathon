@@ -41,7 +41,8 @@ func (o *Context) recordStats(stats *server.Stats, responseTime int64) {
 }
 
 //NoteRequestCompletion This is called after a response is received or an exception is thrown from the client to update related stats.
-func (o *Context) NoteRequestCompletion(stats *server.Stats, response interface{}, err error, responseTime int64, errorHandler retry.Handler) {
+func (o *Context) NoteRequestCompletion(stats *server.Stats, response interface{},
+		err error, responseTime int64, errorHandler retry.Handler) {
 	if stats == nil {
 		return
 	}
@@ -50,16 +51,16 @@ func (o *Context) NoteRequestCompletion(stats *server.Stats, response interface{
 	if callErrorHandler == nil {
 		callErrorHandler = o.RetryHandler
 	}
-	if callErrorHandler != nil && response != nil {
-		stats.ClearSuccessiveConnectionFailureCount()
-	} else if errorHandler != nil && err != nil {
+
+	if err != nil {
 		if errorHandler.IsCircuitTrippingException(err) {
 			stats.IncrementSuccessiveConnectionFailureCount()
 			stats.AddToFailureCount()
-		} else {
-			stats.ClearSuccessiveConnectionFailureCount()
+			return
 		}
 	}
+	stats.ClearSuccessiveConnectionFailureCount()
+	return
 }
 
 //NoteError This is called after an error is thrown from the client to update related stats.
@@ -69,13 +70,14 @@ func (o *Context) NoteError(stats *server.Stats, request client.Request, err err
 	}
 	o.recordStats(stats, responseTime)
 	errorHandler := o.RetryHandler
-	if errorHandler != nil && err != nil {
+	if err != nil {
 		if errorHandler.IsCircuitTrippingException(err) {
 			stats.IncrementSuccessiveConnectionFailureCount()
 			stats.AddToFailureCount()
-		} else {
-			stats.ClearSuccessiveConnectionFailureCount()
+			return
 		}
+		stats.ClearSuccessiveConnectionFailureCount()
+		return
 	}
 }
 
