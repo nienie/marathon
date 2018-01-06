@@ -193,7 +193,7 @@ func (o *BaseLoadBalancer)runFaultRecoverTask() {
 
 	newTempDownServers := make([]*server.Server, 0)
 	currentTime := time.Duration(time.Now().UnixNano())
-	o.tempDownServerLock.RLock()
+	o.tempDownServerLock.Lock()
 	for _, svr := range o.tempDownServerList {
 		if svr.IsTempDown() == false {
 			continue
@@ -209,8 +209,6 @@ func (o *BaseLoadBalancer)runFaultRecoverTask() {
 		}
 		newTempDownServers = append(newTempDownServers, svr)
 	}
-	o.tempDownServerLock.RUnlock()
-	o.tempDownServerLock.Lock()
 	o.tempDownServerList = newTempDownServers
 	o.tempDownServerLock.Unlock()
 }
@@ -362,6 +360,9 @@ func (o *BaseLoadBalancer)MarkServerTempDown(svr *server.Server) {
 		return
 	}
 	svr.SetTempDown(true)
+	o.tempDownServerLock.Lock()
+	o.tempDownServerList = append(o.tempDownServerList, svr)
+	o.tempDownServerLock.Unlock()
 }
 
 //Shutdown ...
