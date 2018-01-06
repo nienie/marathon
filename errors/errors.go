@@ -1,6 +1,9 @@
 package errors
 
-import "fmt"
+import (
+	"fmt"
+	"regexp"
+)
 
 //ClientError ...
 type ClientError struct {
@@ -9,7 +12,7 @@ type ClientError struct {
 }
 
 //NewClientError ...
-func NewClientError(errorType ErrorType, err error) error {
+func NewClientError(errorType ErrorType, err error) ClientError {
 	return ClientError{
 		errorType: errorType,
 		err:       err,
@@ -28,4 +31,29 @@ func (o ClientError) Error() string {
 //GetErrType ...
 func (o ClientError) GetErrType() ErrorType {
 	return o.errorType
+}
+
+//ConvertError ...
+func ConvertError(err error) ClientError {
+	if err == nil {
+		return NewClientError(OK, nil)
+	}
+	str := err.Error()
+
+	re := regexp.MustCompile(`getsockopt: connection refused`)
+	if re.MatchString(str) {
+		return NewClientError(ConnectException, err)
+	}
+
+	re = regexp.MustCompile(`dial.*i/o timeout`)
+	if re.MatchString(str) {
+		return NewClientError(SocketTimeoutException, err)
+	}
+
+	re = regexp.MustCompile(`read.*i/o timeout`)
+	if re.MatchString(str) {
+		return NewClientError(ReadTimeoutException, err)
+	}
+
+	return NewClientError(General, err)
 }

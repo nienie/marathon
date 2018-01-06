@@ -152,8 +152,10 @@ func (o *BaseLoadBalancer)runPingTask() {
 
 		if isAlive {
 			newUpList = append(newUpList, svr)
+			svr.SetTempDown(false)
 		}
 	}
+
 	//no servers are alive, make them all be selected.
 	if len(newUpList) == 0 {
 		o.upServerLock.Lock()
@@ -193,6 +195,9 @@ func (o *BaseLoadBalancer)runFaultRecoverTask() {
 	currentTime := time.Duration(time.Now().UnixNano())
 	o.tempDownServerLock.RLock()
 	for _, svr := range o.tempDownServerList {
+		if svr.IsTempDown() == false {
+			continue
+		}
 		if svr.IsAlive() == false {
 			svr.SetTempDown(false)
 			continue

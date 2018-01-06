@@ -89,11 +89,7 @@ func (c *LoadBalancerHTTPClient) Execute(request client.Request, requestConfig c
 func (c *LoadBalancerHTTPClient) ExecuteHTTP(request *HTTPRequest, requestConfig config.ClientConfig) (*HTTPResponse, error) {
 	response, err := c.Client.Do(request.GetRawRequest())
 	if err != nil {
-		//TODO: Convert err to ClientError
-		//1. dial tcp 127.0.0.1:9298: getsockopt: connection refused
-		//2. dial tcp 127.0.0.1:9298: i/o timeout
-		//3. read tcp 127.0.0.1:54490->127.0.0.1:9298: i/o timeout
-		return nil, err
+		return nil, errors.ConvertError(err)
 	}
 	if response.StatusCode == http.StatusBadGateway ||
 		response.StatusCode == http.StatusServiceUnavailable ||

@@ -40,7 +40,9 @@ func (o *LoadBalancerRetryHandler) IsRetriableException(err error, sameServer bo
 			switch err.(type) {
 			case errors.ClientError:
 				errorType := err.(errors.ClientError).GetErrType()
-				if errorType == errors.SocketTimeoutException || errorType == errors.ConnectException {
+				if errorType == errors.SocketTimeoutException ||
+					errorType == errors.ConnectException ||
+					errorType == errors.ReadTimeoutException {
 					return true
 				}
 				return false
@@ -59,7 +61,7 @@ func (o *LoadBalancerRetryHandler) IsCircuitTrippingException(err error) bool {
 	switch err.(type) {
 	case errors.ClientError:
 		errorType := err.(errors.ClientError).GetErrType()
-		if errorType == errors.SocketTimeoutException || errorType == errors.SocketException {
+		if errorType == errors.ConnectException || errorType == errors.SocketException {
 			return true
 		}
 		return false

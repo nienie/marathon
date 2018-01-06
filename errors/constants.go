@@ -4,8 +4,9 @@ package errors
 type ErrorType int
 
 const (
+	OK 	ErrorType = iota
+	General
 	//General ...
-	General ErrorType = 1 + iota
 	//Configuration ...
 	Configuration
 	//NumberOfRetriesExceeded ...
@@ -35,6 +36,7 @@ const (
 )
 
 var errorTypeNameMap = map[ErrorType]string{
+	OK:								   "OK",
 	General:                           "General",
 	Configuration:                     "Configuration",
 	NumberOfRetriesExceeded:           "NumberOfRetriesExceeded",
