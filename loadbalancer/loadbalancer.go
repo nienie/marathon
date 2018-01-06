@@ -39,6 +39,7 @@ type LoadBalancer interface {
 	//SetRule ...
 	SetRule(Rule)
 
-	//
+	//MarkServerTempDown mark a server down temporary ...
+	MarkServerTempDown(*server.Server)
 
 }

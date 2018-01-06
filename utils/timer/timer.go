@@ -6,12 +6,6 @@ import (
 	"time"
 )
 
-//Task ...
-type Task interface {
-	//Run ...
-	Run()
-}
-
 //Timer ...
 type Timer struct {
 	Name      string
@@ -30,7 +24,7 @@ func NewTimer(name string) *Timer {
 }
 
 //Schedule ...
-func (t *Timer) Schedule(task Task, period time.Duration) {
+func (t *Timer) Schedule(task func(), period time.Duration) {
 	if task == nil || period <= 0 {
 		return
 	}
@@ -48,7 +42,7 @@ func (t *Timer) Schedule(task Task, period time.Duration) {
 					t.isRunning = 0
 					return
 				case <-ticker.C:
-					task.Run()
+					go task()
 				}
 			}
 		}()

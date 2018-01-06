@@ -25,17 +25,18 @@ var (
 //of every Node/Server in the LaodBalancer. This information can be used to just observe and understand the runtime
 //behavior of the loadbalancer or more importantly for the basis that determines the loadbalacing strategy
 type Stats struct {
-	Name                        string
-	ConnectionFailureThreshold  int
-	CircuitTrippedTimeoutFactor int
-	MaxCircuitTrippedTimeout    time.Duration
-	ServerStatsCacheExpireTime  time.Duration
+	Name                              string
+	ConnectionFailureThreshold        int
+	CircuitTrippedTimeoutFactor       int
+	MaxCircuitTrippedTimeout          time.Duration
+	ServerStatsCacheExpireTime        time.Duration
+	FailureCountSlidingWindowInterval time.Duration
 
-	serverStatsCache   *cache.TimedCache
-	clusterStatsMap    map[string]*ClusterStats
-	clusterStatsLock   sync.RWMutex
-	upServerClusterMap map[string][]*server.Server
-	serverClusterLock  sync.RWMutex
+	serverStatsCache                  *cache.TimedCache
+	clusterStatsMap                   map[string]*ClusterStats
+	clusterStatsLock                  sync.RWMutex
+	upServerClusterMap                map[string][]*server.Server
+	serverClusterLock                 sync.RWMutex
 }
 
 type serverStatsCacheCallback struct {
@@ -77,6 +78,8 @@ func NewLoadBalancerStats(clientConfig config.ClientConfig) *Stats {
 			config.DefaultCircuitTrippedTimeoutFactor),
 		MaxCircuitTrippedTimeout: clientConfig.GetPropertyAsDuration(config.CircuitTripMaxTimeout,
 			config.DefaultCircuitTripMaxTimeout),
+		FailureCountSlidingWindowInterval: clientConfig.GetPropertyAsDuration(config.FailureCountSlidingWindowInterval,
+			config.DefaultFailureCountSlidingWindowInterval),
 		ServerStatsCacheExpireTime: DefaultServerStatsCacheExpireTime,
 		clusterStatsMap:            make(map[string]*ClusterStats),
 		clusterStatsLock:           sync.RWMutex{},
@@ -94,6 +97,7 @@ func (o *Stats) CreateServerStats(s *server.Server) *server.Stats {
 	ss.CircuitTrippedTimeoutFactor = o.CircuitTrippedTimeoutFactor
 	ss.ConnectionFailureThreshold = o.ConnectionFailureThreshold
 	ss.MaxCircuitTrippedTimeout = o.MaxCircuitTrippedTimeout
+	ss.FailureCountSlidingWindowInterval = o.FailureCountSlidingWindowInterval
 	ss.Initialize(s)
 	return ss
 }

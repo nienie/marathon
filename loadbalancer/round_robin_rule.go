@@ -29,7 +29,7 @@ func (o *RoundRobinRule) ChooseFromLoadBalancer(lb LoadBalancer, key interface{}
 	}
 
 	var server *server.Server
-	for count := 0; count < 10; count++ {
+	for count := 0; count < 20; count++ {
 		reachableServers := lb.GetReachableServers()
 		allServers := lb.GetAllServers()
 
@@ -48,7 +48,7 @@ func (o *RoundRobinRule) ChooseFromLoadBalancer(lb LoadBalancer, key interface{}
 			continue
 		}
 
-		if server.IsAlive() {
+		if server.IsAlive() && server.IsTempDown() == false {
 			return server
 		}
 	}

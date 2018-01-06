@@ -114,6 +114,7 @@ func (c *DefaultClientConfig) LoadDefaultValues() {
 	c.putDefaultStringProperty(LoadBalancerRule, DefaultLoadBalancerRule)
 	c.putDefaultStringProperty(LoadBalancerKey, DefaultLoadBalancerKey)
 	c.putDefaultDurationProperty(RequestTimeout, DefaultRequestTimeout)
+	c.putDefaultDurationProperty(FailureCountSlidingWindowInterval, DefaultFailureCountSlidingWindowInterval)
 }
 
 //LoadProperties ...

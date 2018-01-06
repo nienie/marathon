@@ -22,6 +22,7 @@ type Server struct {
 	isAliveFlag  bool
 	readyToServe bool
 	cluster      string
+	tempDown 	 bool
 }
 
 //NewServer create a server instance
@@ -33,6 +34,7 @@ func NewServer(scheme string, host string, port int) *Server {
 		id:           fmt.Sprintf(IDFormat, host, port),
 		isAliveFlag:  true,
 		readyToServe: true,
+		tempDown: 	  false,
 		cluster:      ClusterUnknown,
 	}
 	return s
@@ -160,4 +162,14 @@ func (s *Server) SetCluster(cluster string) {
 	if len(cluster) > 0 {
 		s.cluster = cluster
 	}
+}
+
+//SetTempDown ...
+func (s *Server)SetTempDown(isDown bool) {
+	s.tempDown = isDown
+}
+
+//IsTempDown ...
+func (s *Server)IsTempDown() bool {
+	return s.tempDown
 }

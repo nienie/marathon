@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/nienie/marathon/client"
 	"github.com/nienie/marathon/config"
@@ -56,10 +57,17 @@ func (o *Context) NoteRequestCompletion(stats *server.Stats, response interface{
 		if errorHandler.IsCircuitTrippingException(err) {
 			stats.IncrementSuccessiveConnectionFailureCount()
 			stats.AddToFailureCount()
+			if stats.IsCircuitBreakerTripped(time.Duration(time.Now().UnixNano())) {
+				o.LoadBalancer.MarkServerTempDown(stats.Server)
+			}
 			return
 		}
+		stats.ClearSuccessiveConnectionFailureCount()
+		o.LoadBalancer.MarkServerTempDown(stats.Server)
+		return
 	}
 	stats.ClearSuccessiveConnectionFailureCount()
+	o.LoadBalancer.MarkServerTempDown(stats.Server)
 	return
 }
 
@@ -74,23 +82,17 @@ func (o *Context) NoteError(stats *server.Stats, request client.Request, err err
 		if errorHandler.IsCircuitTrippingException(err) {
 			stats.IncrementSuccessiveConnectionFailureCount()
 			stats.AddToFailureCount()
+			if stats.IsCircuitBreakerTripped(time.Duration(time.Now().UnixNano())) {
+				o.LoadBalancer.MarkServerTempDown(stats.Server)
+			}
 			return
 		}
 		stats.ClearSuccessiveConnectionFailureCount()
+		o.LoadBalancer.MarkServerTempDown(stats.Server)
 		return
 	}
-}
 
-//NoteResponse This is called after a response is received from the client to update related stats.
-func (o *Context) NoteResponse(stats *server.Stats, request client.Request, response interface{}, responseTime int64) {
-	if stats == nil {
-		return
-	}
-	o.recordStats(stats, responseTime)
-	errorHandler := o.RetryHandler
-	if errorHandler != nil && response != nil {
-		stats.ClearSuccessiveConnectionFailureCount()
-	}
+	return
 }
 
 //NoteOpenConnection This is usually called just before client execute a request.
@@ -109,11 +111,11 @@ func (o *Context) deriveSchemeAndPortFromPartialURI(uri *url.URL) (port int, sch
 	}
 	hostPost := strings.Split(uri.Host, ":")
 	if len(hostPost) == 2 {
-		iPort, err := strconv.ParseInt(hostPost[1], 10, 32)
+		p, err := strconv.ParseInt(hostPost[1], 10, 32)
 		if err != nil {
-			iPort = 0
+			p = 0
 		}
-		port = int(iPort)
+		port = int(p)
 	}
 	if port <= 0 && !isSecure {
 		port = 80
@@ -125,44 +127,6 @@ func (o *Context) deriveSchemeAndPortFromPartialURI(uri *url.URL) (port int, sch
 			scheme = "https"
 		} else {
 			scheme = "http"
-		}
-	}
-	return
-}
-
-func (o *Context) deriveHostAndPortFromVIPAddress(vipAddress string) (scheme, host string, port int, err error) {
-	var uri *url.URL
-	uri, err = url.Parse(vipAddress)
-	if err != nil {
-		return
-	}
-	scheme = uri.Scheme
-	if len(scheme) == 0 {
-		scheme = "http"
-		uri, err = url.Parse("http" + vipAddress)
-		if err != nil {
-			return
-		}
-	}
-	if len(uri.Host) == 0 {
-		err = fmt.Errorf("unable to derive host/port from vip address %s", vipAddress)
-		return
-	}
-	hostPort := strings.Split(uri.Host, ":")
-	host = hostPort[0]
-	if len(hostPort) == 2 {
-		var iPort int64
-		iPort, err = strconv.ParseInt(hostPort[1], 10, 32)
-		if err != nil {
-			return
-		}
-		port = int(iPort)
-	}
-	if port <= 0 {
-		if scheme == "http" {
-			port = 80
-		} else {
-			port = 443
 		}
 	}
 	return
