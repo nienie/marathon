@@ -1,0 +1,4 @@
+package: github.com/nienie/marathon
+import:
+- package: github.com/magiconair/properties
+  version: ^1.7.4

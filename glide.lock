@@ -1,0 +1,8 @@
+hash: d323b2257b0e683c76d56673405ecdd99032c9fe78c605a7b84a6be341273bf5
+updated: 2018-01-05T19:40:56.888775853+08:00
+imports:
+- name: github.com/magiconair/properties
+  version: d419a98cdbed11a922bf76f257b7c4be79b50e73
+- name: github.com/mreiferson/go-httpclient
+  version: 31f0106b4474f14bc441575c19d3a5fa21aa1f6c
+testImports: []
