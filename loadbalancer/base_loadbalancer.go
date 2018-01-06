@@ -11,6 +11,11 @@ import (
 	"github.com/nienie/marathon/utils/timer"
 )
 
+const (
+	//LoadBalancerPrefix ...
+	LoadBalancerPrefix = "LB_"
+)
+
 //BaseLoadBalancer ...
 type BaseLoadBalancer struct {
 	name string
@@ -39,17 +44,18 @@ func NewBaseLoadBalancer(clientConfig config.ClientConfig, rule Rule, pingAction
 	pingStrategy ping.Strategy) LoadBalancer {
 	loadBalancer := &BaseLoadBalancer{
 		name:                  clientConfig.GetClientName(),
+		pingAction:            pingAction,
 		pingStrategy:          pingStrategy,
+		pingInterval:          clientConfig.GetPropertyAsDuration(config.PingInterval, config.DefaultPingInterval),
 		changeListeners:       make([]server.ListChangeListener, 0),
 		serverStatusListeners: make([]server.StatusChangeListener, 0),
 		allServersList:        make([]*server.Server, 0),
 		upServersList:         make([]*server.Server, 0),
 		allServerLock:         sync.RWMutex{},
 		upServerLock:          sync.RWMutex{},
-		pingInterval:          clientConfig.GetPropertyAsDuration(config.PingInterval, config.DefaultPingInterval),
 	}
 	if loadBalancer.pingStrategy == nil {
-		loadBalancer.pingStrategy = ping.NewSerialStrategy()
+		loadBalancer.pingStrategy = ping.NewParallelStrategy()
 	}
 	loadBalancer.lbStats = NewLoadBalancerStats(clientConfig)
 	loadBalancer.SetRule(rule)
@@ -105,7 +111,7 @@ func (o *BaseLoadBalancer) setupPingTask() {
 	}
 	o.pingTaskTimer = timer.NewTimer(o.name)
 	o.pingTaskTimer.Schedule(o, o.pingInterval)
-	o.runPingTask()
+	//o.runPingTask()
 }
 
 //Run implements timer.Task interface{}

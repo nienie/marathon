@@ -11,14 +11,10 @@ import (
 )
 
 const (
-	//DefaultConnectionFailureThreshold ...
-	DefaultConnectionFailureThreshold = 3
-	//DefaultCircuitTrippedTimeoutFactor ...
-	DefaultCircuitTrippedTimeoutFactor = 10
-	//DefaultCircuitTripMaxTimeout ...
-	DefaultCircuitTripMaxTimeout = 30 * time.Second
 	//DefaultServerStatsCacheExpireTime ...
 	DefaultServerStatsCacheExpireTime = 30 * time.Minute
+	//LoadBalancerStatsPrefix ...
+	LoadBalancerStatsPrefix = "LBStats_"
 )
 
 var (

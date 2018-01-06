@@ -48,7 +48,7 @@ func (o *RoundRobinRule) ChooseFromLoadBalancer(lb LoadBalancer, key interface{}
 			continue
 		}
 
-		if server.IsAlive() && server.IsReadyToServe() {
+		if server.IsAlive() {
 			return server
 		}
 	}

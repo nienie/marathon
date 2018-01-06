@@ -32,4 +32,13 @@ type LoadBalancer interface {
 
 	//GetLoadBalancerStats ...
 	GetLoadBalancerStats() *Stats
+
+	//GetRule ...
+	GetRule() Rule
+
+	//SetRule ...
+	SetRule(Rule)
+
+	//
+
 }
