@@ -95,10 +95,9 @@ func (c *LoadBalancerHTTPClient) ExecuteHTTP(request *HTTPRequest, requestConfig
 		//3. read tcp 127.0.0.1:54490->127.0.0.1:9298: i/o timeout
 		return nil, err
 	}
-	if response.StatusCode == http.StatusInternalServerError ||
-		response.StatusCode == http.StatusBadGateway ||
+	if response.StatusCode == http.StatusBadGateway ||
 		response.StatusCode == http.StatusServiceUnavailable ||
-		response.StatusCode == http.StatusGatewayTimeout { //500/502/503/504
+		response.StatusCode == http.StatusGatewayTimeout { //502/503/504
 		return nil, errors.NewClientError(errors.ServerThrottled, nil)
 	}
 	return NewHTTPResponse(response), nil
