@@ -63,11 +63,9 @@ func (o *Context) NoteRequestCompletion(stats *server.Stats, response interface{
 			return
 		}
 		stats.ClearSuccessiveConnectionFailureCount()
-		o.LoadBalancer.MarkServerTempDown(stats.Server)
 		return
 	}
 	stats.ClearSuccessiveConnectionFailureCount()
-	o.LoadBalancer.MarkServerTempDown(stats.Server)
 	return
 }
 
@@ -88,7 +86,6 @@ func (o *Context) NoteError(stats *server.Stats, request client.Request, err err
 			return
 		}
 		stats.ClearSuccessiveConnectionFailureCount()
-		o.LoadBalancer.MarkServerTempDown(stats.Server)
 		return
 	}
 
