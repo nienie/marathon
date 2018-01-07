@@ -317,7 +317,7 @@ func (o *Stats) UpdateClusterServerMapping(m map[string][]*server.Server) {
 	clusters := make([]string, 0)
 	for key, val := range m {
 		clusters = append(clusters, key)
-		newMap[key] = val
+		newMap[key] = server.CloneServerList(val)
 	}
 	o.clusterStatsLock.Lock()
 	o.upServerClusterMap = newMap

@@ -24,13 +24,23 @@ func NewTimer(name string) *Timer {
 }
 
 //Schedule ...
-func (t *Timer) Schedule(task func(), period time.Duration) {
-	if task == nil || period <= 0 {
+func (t *Timer) Schedule(task func(), period time.Duration, delay time.Duration) {
+	if task == nil || period <= 0 || delay < 0{
 		return
 	}
 
 	if atomic.CompareAndSwapInt32(&t.isRunning, 0, 1) {
 		go func() {
+			if delay > 0 {
+				dt := time.After(delay)
+				for {
+					select {
+					case <-t.stop:
+						return
+					case <-dt:
+					}
+				}
+			}
 			ticker := time.NewTicker(period)
 			defer ticker.Stop()
 			runtime.SetFinalizer(t, func(t *Timer) {
@@ -39,7 +49,6 @@ func (t *Timer) Schedule(task func(), period time.Duration) {
 			for {
 				select {
 				case <-t.stop:
-					t.isRunning = 0
 					return
 				case <-ticker.C:
 					go task()
@@ -51,7 +60,7 @@ func (t *Timer) Schedule(task func(), period time.Duration) {
 
 //Cancel ...
 func (t *Timer) Cancel() {
-	if t.isRunning > 0 {
+	if atomic.CompareAndSwapInt32(&t.isRunning, 1, 0) {
 		//stop the Timer, does not close the channel, to prevent a read from the channel succeeding incorrectly.
 		t.stop <- true
 	}

@@ -44,6 +44,8 @@ const (
 	LoadBalancerRule = "LoadBalancerRule"
 	//LoadBalancerKey
 	LoadBalancerKey = "LoadBalancerKey"
+	//ListOfServersPollingInterval ...
+	ListOfServersPollingInterval = "ListOfServersPollingInterval"
 )
 
 //config default value
@@ -86,6 +88,8 @@ const (
 	DefaultLoadBalancerRule = "RandomRule"
 	//DefaultLoadBalancerKey ...
 	DefaultLoadBalancerKey = "marathon"
+	//DefaultListOfServersPollingInterval ...
+	DefaultListOfServersPollingInterval = 30 * time.Second
 )
 
 //PingStrategy ...

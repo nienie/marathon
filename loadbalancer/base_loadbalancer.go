@@ -47,7 +47,7 @@ type BaseLoadBalancer struct {
 
 //NewBaseLoadBalancer A basic implementation of the load balancer.
 func NewBaseLoadBalancer(clientConfig config.ClientConfig, rule Rule, pingAction ping.Ping,
-	pingStrategy ping.Strategy) LoadBalancer {
+	pingStrategy ping.Strategy) *BaseLoadBalancer {
 	loadBalancer := &BaseLoadBalancer{
 		name:                  clientConfig.GetClientName(),
 		pingAction:            pingAction,
@@ -120,7 +120,7 @@ func (o *BaseLoadBalancer)setupPingTask() {
 		o.healthCheckTimer.Cancel()
 	}
 	o.healthCheckTimer = timer.NewTimer(o.name + "_HealthCheckTask")
-	o.healthCheckTimer.Schedule(o.runPingTask, o.pingInterval)
+	o.healthCheckTimer.Schedule(o.runPingTask, o.pingInterval, 0)
 	//o.runPingTask()
 }
 
@@ -181,7 +181,7 @@ func (o *BaseLoadBalancer)setupFaultRecoverTask() {
 		o.faultRecoverTimer.Cancel()
 	}
 	o.faultRecoverTimer = timer.NewTimer(o.name + "_FaultRecoverTask")
-	o.faultRecoverTimer.Schedule(o.runFaultRecoverTask, o.recoverInterval)
+	o.faultRecoverTimer.Schedule(o.runFaultRecoverTask, o.recoverInterval, 0)
 }
 
 func (o *BaseLoadBalancer)runFaultRecoverTask() {
@@ -283,6 +283,10 @@ func (o *BaseLoadBalancer) SetServerList(serverList []*server.Server) {
 	o.allServersList = allServers
 	o.allServerLock.Unlock()
 
+	o.tempDownServerLock.Lock()
+	o.tempDownServerList = make([]*server.Server, 0)
+	o.tempDownServerLock.Unlock()
+
 	if o.pingAction == nil {
 		for _, s := range o.allServersList {
 			s.SetAlive(true)
@@ -297,12 +301,18 @@ func (o *BaseLoadBalancer) SetServerList(serverList []*server.Server) {
 	if listChanged {
 		o.setupPingTask()
 	}
+	return
 }
 
 func (o *BaseLoadBalancer) notifyServerListChanged(oldList, newList []*server.Server) {
 	for _, serverListChangedListener := range o.changeListeners {
 		serverListChangedListener.ServerListChanged(oldList, newList)
 	}
+}
+
+//SetServerListForClusters ...
+func (o *BaseLoadBalancer)SetServerListForClusters(clusterServersMap map[string][]*server.Server) {
+	o.GetLoadBalancerStats().UpdateClusterServerMapping(clusterServersMap)
 }
 
 //AddServers Add a list of servers to the 'allServer' list; does not verify

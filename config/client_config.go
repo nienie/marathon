@@ -115,6 +115,7 @@ func (c *DefaultClientConfig) LoadDefaultValues() {
 	c.putDefaultStringProperty(LoadBalancerKey, DefaultLoadBalancerKey)
 	c.putDefaultDurationProperty(RequestTimeout, DefaultRequestTimeout)
 	c.putDefaultDurationProperty(FailureCountSlidingWindowInterval, DefaultFailureCountSlidingWindowInterval)
+	c.putDefaultDurationProperty(ListOfServersPollingInterval, DefaultListOfServersPollingInterval)
 }
 
 //LoadProperties ...
