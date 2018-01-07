@@ -24,6 +24,9 @@ type LoadBalancer interface {
 	//else, the load balancer will think its still Alive until the next Ping cycle.
 	MarkServerDown(server *server.Server)
 
+	//MarkServerTempDown mark a server down temporary ...
+	MarkServerTempDown(*server.Server)
+
 	//GetReachableServers only the servers that are up and reachable.
 	GetReachableServers() []*server.Server
 
@@ -32,14 +35,4 @@ type LoadBalancer interface {
 
 	//GetLoadBalancerStats ...
 	GetLoadBalancerStats() *Stats
-
-	//GetRule ...
-	GetRule() Rule
-
-	//SetRule ...
-	SetRule(Rule)
-
-	//MarkServerTempDown mark a server down temporary ...
-	MarkServerTempDown(*server.Server)
-
 }
