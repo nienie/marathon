@@ -27,6 +27,9 @@ type LoadBalancer interface {
 	//MarkServerTempDown mark a server down temporary ...
 	MarkServerTempDown(*server.Server)
 
+	//MarkServerReady ...
+	MarkServerReady(*server.Server)
+
 	//GetReachableServers only the servers that are up and reachable.
 	GetReachableServers() []*server.Server
 

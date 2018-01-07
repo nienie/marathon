@@ -375,6 +375,14 @@ func (o *BaseLoadBalancer)MarkServerTempDown(svr *server.Server) {
 	o.tempDownServerLock.Unlock()
 }
 
+//MarkServerReady ...
+func (o *BaseLoadBalancer)MarkServerReady(svr *server.Server) {
+	if svr == nil || svr.IsAlive() == false || svr.IsTempDown() == false {
+		return
+	}
+	svr.SetTempDown(false)
+}
+
 //Shutdown ...
 func (o *BaseLoadBalancer) Shutdown() {
 	o.stopPingTask()
