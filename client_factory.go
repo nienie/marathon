@@ -4,7 +4,7 @@ import (
     "sync"
 
     "github.com/nienie/marathon/loadbalancer"
-    "github.com/nienie/marathon/http"
+    "github.com/nienie/marathon/httpclient"
 )
 
 var (
@@ -31,6 +31,7 @@ func newClientFactory() *clientFactory {
     }
 }
 
+//RegisterLoadBalancer ...
 func RegisterLoadBalancer(name string, lb loadbalancer.LoadBalancer) {
     if len(name) == 0 || lb == nil {
         return
@@ -43,6 +44,7 @@ func RegisterLoadBalancer(name string, lb loadbalancer.LoadBalancer) {
     cf.lbLock.Unlock()
 }
 
+//RegisterHTTPClient ...
 func RegisterHTTPClient(name string, client *httpclient.LoadBalancerHTTPClient) {
     if len(name) == 0 || client == nil {
         return

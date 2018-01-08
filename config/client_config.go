@@ -30,7 +30,7 @@ type ClientConfig interface {
 	GetPropertyAsDuration(configKey string, defaultValue time.Duration) time.Duration
 
 	//SetProperty ...
-	SetProperty(configKey string, value interface{})
+	SetProperty(configKey string, value interface{}) ClientConfig
 }
 
 //DefaultClientConfig ...
@@ -116,6 +116,14 @@ func (c *DefaultClientConfig) LoadDefaultValues() {
 	c.putDefaultDurationProperty(RequestTimeout, DefaultRequestTimeout)
 	c.putDefaultDurationProperty(FailureCountSlidingWindowInterval, DefaultFailureCountSlidingWindowInterval)
 	c.putDefaultDurationProperty(ListOfServersPollingInterval, DefaultListOfServersPollingInterval)
+	c.putDefaultBoolProperty(ConcurrencyRateLimitSwitch, DefaultConcurrencyRateLimitSwitch)
+	c.putDefaultBoolProperty(TokenBucketRateLimitSwitch, DefaultTokenBucketRateLimitSwitch)
+	c.putDefaultIntegerProperty(TokenBucketCapacity, DefaultTokenBucketCapacity)
+	c.putDefaultDurationProperty(TokenBucketFillInterval, DefaultTokenBucketFillInterval)
+	c.putDefaultIntegerProperty(TokenBucketFillCount, DefaultTokenBucketFillCount)
+	c.putDefaultBoolProperty(LeakyBucketRateLimitSwitch, DefaultLeakyBucketRateLimitSwitch)
+	c.putDefaultIntegerProperty(LeakyBucketCapacity, DefaultLeakyBucketCapacity)
+	c.putDefaultDurationProperty(LeakyBucketInterval, DefaultLeakyBucketInterval)
 }
 
 //LoadProperties ...
@@ -152,6 +160,7 @@ func (c *DefaultClientConfig) GetPropertyAsDuration(configKey string, defaultVal
 }
 
 //SetProperty ...
-func (c *DefaultClientConfig) SetProperty(configKey string, value interface{}) {
+func (c *DefaultClientConfig) SetProperty(configKey string, value interface{}) ClientConfig {
 	c.InternalProperties.SetValue(configKey, value)
+	return c
 }

@@ -42,7 +42,7 @@ func (o *Context) recordStats(stats *server.Stats, responseTime int64) {
 }
 
 //NoteRequestCompletion This is called after a response is received or an exception is thrown from the client to update related stats.
-func (o *Context) NoteRequestCompletion(stats *server.Stats, response interface{},
+func (o *Context) NoteRequestCompletion(stats *server.Stats, response client.Response,
 		err error, responseTime int64, errorHandler retry.Handler) {
 	if stats == nil {
 		return
@@ -194,7 +194,7 @@ func (o *Context) ReconstructURIWithServer(svr *server.Server, original *url.URL
 
 	newURL = newURL + host
 
-	if port >= 0 {
+	if port > 0 {
 		newURL = newURL + ":" + fmt.Sprint(port)
 	}
 

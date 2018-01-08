@@ -119,6 +119,9 @@ func (s *Server) GetPort() int {
 
 //GetHostPort ...
 func (s *Server) GetHostPort() string {
+	if s.port <= 0 {
+		return s.host
+	}
 	return fmt.Sprintf(IDFormat, s.host, s.port)
 }
 

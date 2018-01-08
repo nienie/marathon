@@ -1,9 +1,12 @@
 package client
 
-import "github.com/nienie/marathon/config"
+import (
+	"github.com/nienie/marathon/config"
+	"context"
+)
 
 //Client ...
 type Client interface {
 	//Execute ...
-	Execute(Request, config.ClientConfig) (Response, error)
+	Execute(context.Context, Request, config.ClientConfig) (Response, error)
 }
