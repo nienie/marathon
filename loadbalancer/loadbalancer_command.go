@@ -1,9 +1,9 @@
 package loadbalancer
 
 import (
+	"context"
 	"net/url"
 	"time"
-	"context"
 
 	"github.com/nienie/marathon/client"
 	"github.com/nienie/marathon/errors"

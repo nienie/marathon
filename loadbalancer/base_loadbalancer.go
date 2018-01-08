@@ -18,31 +18,31 @@ const (
 
 //BaseLoadBalancer ...
 type BaseLoadBalancer struct {
-	name                  string
+	name string
 
-	rule                  Rule
-	pingAction            ping.Ping
-	pingStrategy          ping.Strategy
-	lbStats               *Stats
+	rule         Rule
+	pingAction   ping.Ping
+	pingStrategy ping.Strategy
+	lbStats      *Stats
 
-	pingInterval          time.Duration
-	recoverInterval       time.Duration
+	pingInterval    time.Duration
+	recoverInterval time.Duration
 
 	changeListeners       []server.ListChangeListener
 	serverStatusListeners []server.StatusChangeListener
 
-	allServerLock         sync.RWMutex
-	upServerLock          sync.RWMutex
-	tempDownServerLock    sync.RWMutex
-	allServersList        []*server.Server
-	upServersList         []*server.Server
-	tempDownServerList    []*server.Server
+	allServerLock      sync.RWMutex
+	upServerLock       sync.RWMutex
+	tempDownServerLock sync.RWMutex
+	allServersList     []*server.Server
+	upServersList      []*server.Server
+	tempDownServerList []*server.Server
 
-	faultRecoverTimer     *timer.Timer
-	healthCheckTimer      *timer.Timer
+	faultRecoverTimer *timer.Timer
+	healthCheckTimer  *timer.Timer
 
-	pingInProgress        int32
-	recoverInProgress     int32
+	pingInProgress    int32
+	recoverInProgress int32
 }
 
 //NewBaseLoadBalancer A basic implementation of the load balancer.
@@ -85,7 +85,7 @@ func (o *BaseLoadBalancer) GetName() string {
 }
 
 //SetRule ...
-func (o *BaseLoadBalancer)SetRule(rule Rule) {
+func (o *BaseLoadBalancer) SetRule(rule Rule) {
 	if rule != nil {
 		o.rule = rule
 	} else {
@@ -96,12 +96,12 @@ func (o *BaseLoadBalancer)SetRule(rule Rule) {
 }
 
 //GetRule ...
-func (o *BaseLoadBalancer)GetRule() Rule {
+func (o *BaseLoadBalancer) GetRule() Rule {
 	return o.rule
 }
 
 //SetPing ...
-func (o *BaseLoadBalancer)SetPing(ping ping.Ping) {
+func (o *BaseLoadBalancer) SetPing(ping ping.Ping) {
 	o.pingAction = ping
 	if ping == nil {
 		o.stopPingTask()
@@ -115,7 +115,7 @@ func (o *BaseLoadBalancer) GetPing() ping.Ping {
 	return o.pingAction
 }
 
-func (o *BaseLoadBalancer)setupPingTask() {
+func (o *BaseLoadBalancer) setupPingTask() {
 	if o.healthCheckTimer != nil {
 		o.healthCheckTimer.Cancel()
 	}
@@ -124,7 +124,7 @@ func (o *BaseLoadBalancer)setupPingTask() {
 	//o.runPingTask()
 }
 
-func (o *BaseLoadBalancer)runPingTask() {
+func (o *BaseLoadBalancer) runPingTask() {
 	if !atomic.CompareAndSwapInt32(&o.pingInProgress, 0, 1) {
 		return
 	}
@@ -176,7 +176,7 @@ func (o *BaseLoadBalancer) stopPingTask() {
 	}
 }
 
-func (o *BaseLoadBalancer)setupFaultRecoverTask() {
+func (o *BaseLoadBalancer) setupFaultRecoverTask() {
 	if o.faultRecoverTimer != nil {
 		o.faultRecoverTimer.Cancel()
 	}
@@ -184,7 +184,7 @@ func (o *BaseLoadBalancer)setupFaultRecoverTask() {
 	o.faultRecoverTimer.Schedule(o.runFaultRecoverTask, o.recoverInterval, 0)
 }
 
-func (o *BaseLoadBalancer)runFaultRecoverTask() {
+func (o *BaseLoadBalancer) runFaultRecoverTask() {
 	if !atomic.CompareAndSwapInt32(&o.recoverInProgress, 0, 1) {
 		return
 	}
@@ -213,7 +213,7 @@ func (o *BaseLoadBalancer)runFaultRecoverTask() {
 	o.tempDownServerLock.Unlock()
 }
 
-func (o *BaseLoadBalancer)stopFaultRecoverTask() {
+func (o *BaseLoadBalancer) stopFaultRecoverTask() {
 	if o.faultRecoverTimer != nil {
 		o.faultRecoverTimer.Cancel()
 	}
@@ -311,7 +311,7 @@ func (o *BaseLoadBalancer) notifyServerListChanged(oldList, newList []*server.Se
 }
 
 //SetServerListForClusters ...
-func (o *BaseLoadBalancer)SetServerListForClusters(clusterServersMap map[string][]*server.Server) {
+func (o *BaseLoadBalancer) SetServerListForClusters(clusterServersMap map[string][]*server.Server) {
 	o.GetLoadBalancerStats().UpdateClusterServerMapping(clusterServersMap)
 }
 
@@ -365,7 +365,7 @@ func (o *BaseLoadBalancer) GetLoadBalancerStats() *Stats {
 }
 
 //MarkServerTempDown ...
-func (o *BaseLoadBalancer)MarkServerTempDown(svr *server.Server) {
+func (o *BaseLoadBalancer) MarkServerTempDown(svr *server.Server) {
 	if svr == nil || svr.IsAlive() == false || svr.IsTempDown() == true {
 		return
 	}
@@ -376,7 +376,7 @@ func (o *BaseLoadBalancer)MarkServerTempDown(svr *server.Server) {
 }
 
 //MarkServerReady ...
-func (o *BaseLoadBalancer)MarkServerReady(svr *server.Server) {
+func (o *BaseLoadBalancer) MarkServerReady(svr *server.Server) {
 	if svr == nil || svr.IsAlive() == false || svr.IsTempDown() == false {
 		return
 	}

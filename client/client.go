@@ -1,8 +1,8 @@
 package client
 
 import (
-	"github.com/nienie/marathon/config"
 	"context"
+	"github.com/nienie/marathon/config"
 )
 
 //Client ...

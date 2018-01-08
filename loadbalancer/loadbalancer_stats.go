@@ -32,11 +32,11 @@ type Stats struct {
 	ServerStatsCacheExpireTime        time.Duration
 	FailureCountSlidingWindowInterval time.Duration
 
-	serverStatsCache                  *cache.TimedCache
-	clusterStatsMap                   map[string]*ClusterStats
-	clusterStatsLock                  sync.RWMutex
-	upServerClusterMap                map[string][]*server.Server
-	serverClusterLock                 sync.RWMutex
+	serverStatsCache   *cache.TimedCache
+	clusterStatsMap    map[string]*ClusterStats
+	clusterStatsLock   sync.RWMutex
+	upServerClusterMap map[string][]*server.Server
+	serverClusterLock  sync.RWMutex
 }
 
 type serverStatsCacheCallback struct {

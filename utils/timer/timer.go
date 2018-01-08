@@ -25,7 +25,7 @@ func NewTimer(name string) *Timer {
 
 //Schedule ...
 func (t *Timer) Schedule(task func(), period time.Duration, delay time.Duration) {
-	if task == nil || period <= 0 || delay < 0{
+	if task == nil || period <= 0 || delay < 0 {
 		return
 	}
 

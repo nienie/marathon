@@ -1,15 +1,15 @@
 package metric
 
 import (
-    "context"
-    "time"
+	"context"
+	"time"
 
-    "github.com/nienie/marathon/client"
+	"github.com/nienie/marathon/client"
 )
 
 //Collector ...
 type Collector interface {
 
-    //RPC ...
-    RPC(context.Context, client.Request, client.Response, error, time.Duration)
+	//RPC ...
+	RPC(context.Context, client.Request, client.Response, error, time.Duration)
 }

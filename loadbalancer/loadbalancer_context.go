@@ -43,7 +43,7 @@ func (o *Context) recordStats(stats *server.Stats, responseTime int64) {
 
 //NoteRequestCompletion This is called after a response is received or an exception is thrown from the client to update related stats.
 func (o *Context) NoteRequestCompletion(stats *server.Stats, response client.Response,
-		err error, responseTime int64, errorHandler retry.Handler) {
+	err error, responseTime int64, errorHandler retry.Handler) {
 	if stats == nil {
 		return
 	}

@@ -9,9 +9,9 @@ import (
 	"github.com/nienie/marathon/errors"
 	"github.com/nienie/marathon/loadbalancer/command"
 	"github.com/nienie/marathon/loadbalancer/retry"
+	"github.com/nienie/marathon/metric"
 	"github.com/nienie/marathon/ratelimit"
 	"github.com/nienie/marathon/server"
-	"github.com/nienie/marathon/metric"
 )
 
 //BaseLoadBalancerClient a default implementation that provide the integration of client with load balancer.

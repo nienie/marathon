@@ -1,58 +1,57 @@
 package loadbalancer
 
 import (
-    "github.com/nienie/marathon/server"
-    "math"
+	"github.com/nienie/marathon/server"
+	"math"
 )
 
 //LeastResponseTimeRule ...
 type LeastResponseTimeRule struct {
-    BaseRule
+	BaseRule
 }
 
 //NewLeastResponseTimeRule ...
 func NewLeastResponseTimeRule() Rule {
-    return &LeastResponseTimeRule{}
+	return &LeastResponseTimeRule{}
 }
 
 //Choose ...
-func (o *LeastResponseTimeRule)Choose(key interface{}) *server.Server {
-    return o.ChooseFromLoadBalancer(o.GetLoadBalancer(), key)
+func (o *LeastResponseTimeRule) Choose(key interface{}) *server.Server {
+	return o.ChooseFromLoadBalancer(o.GetLoadBalancer(), key)
 }
 
 //ChooseFromLoadBalancer ...
-func (o *LeastResponseTimeRule)ChooseFromLoadBalancer(lb LoadBalancer, key interface{}) *server.Server {
-    if lb == nil {
-        return nil
-    }
+func (o *LeastResponseTimeRule) ChooseFromLoadBalancer(lb LoadBalancer, key interface{}) *server.Server {
+	if lb == nil {
+		return nil
+	}
 
-    reachableServers := lb.GetReachableServers()
-    allServers := lb.GetAllServers()
+	reachableServers := lb.GetReachableServers()
+	allServers := lb.GetAllServers()
 
-    upCount := len(reachableServers)
-    serverCount := len(allServers)
+	upCount := len(reachableServers)
+	serverCount := len(allServers)
 
-    if upCount == 0 || serverCount == 0 {
-        return nil
-    }
+	if upCount == 0 || serverCount == 0 {
+		return nil
+	}
 
-    lbStats := lb.GetLoadBalancerStats()
-    var (
-        selectedServer *server.Server
-        leastResponseTime = math.MaxFloat64
-    )
+	lbStats := lb.GetLoadBalancerStats()
+	var (
+		selectedServer    *server.Server
+		leastResponseTime = math.MaxFloat64
+	)
 
-    for _, svr := range reachableServers {
-        if svr.IsTempDown() {
-            continue
-        }
-        serverStats := lbStats.GetSingleServerStats(svr)
-        avg := serverStats.GetResponseTimeAvg()
-        if avg < leastResponseTime {
-            leastResponseTime = avg
-            selectedServer = svr
-        }
-    }
-    return selectedServer
+	for _, svr := range reachableServers {
+		if svr.IsTempDown() {
+			continue
+		}
+		serverStats := lbStats.GetSingleServerStats(svr)
+		avg := serverStats.GetResponseTimeAvg()
+		if avg < leastResponseTime {
+			leastResponseTime = avg
+			selectedServer = svr
+		}
+	}
+	return selectedServer
 }
-

@@ -10,7 +10,7 @@ type ConfigurationBasedServerList struct {
 //NewConfigurationBasedServerList ...
 func NewConfigurationBasedServerList(clientConfig config.ClientConfig) *ConfigurationBasedServerList {
 	return &ConfigurationBasedServerList{
-		clientConfig:		clientConfig,
+		clientConfig: clientConfig,
 	}
 }
 
