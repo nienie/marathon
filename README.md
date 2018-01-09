@@ -2,8 +2,6 @@ marathon
 =========
 
 # 说明
-========
-
 **marathon**是用**Go**编写的一个**HTTP的RPC调用框架**，提供了**HttpClient**，通过**配置**的方式，
 可以让**HttpClient**带上**服务发现**，**软负载均衡**，**健康检查**，**故障自动摘除**，**限流**，**监控统计上报**等功能。
     
@@ -36,7 +34,7 @@ marathon
 
 1. 服务发现。
 
-marathon框架没有真正实现服务发现的逻辑，只是提供抽象的interface方便和服务发现配合使用。
+    marathon框架没有真正实现服务发现的逻辑，只是提供抽象的interface方便和服务发现配合使用。
 用户只需要将服务发现的逻辑实现在server.List的GetInitialListOfServers和GetUpdatedListOfServers
 这两个方法中，marathon的HttpClient就具有服务发现的功能。
 
