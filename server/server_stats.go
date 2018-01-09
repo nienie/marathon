@@ -64,10 +64,10 @@ type Stats struct {
 	totalCircuitBreakerBlackOutPeriod int64 //nanoseconds
 
 	//record time
-	lastConnectionFailedTimestamp          time.Duration
-	lastActiveRequestsCountChangeTimestamp time.Duration
-	firstConnectionTimestamp               time.Duration
-	lastAccessedTimestamp                  time.Duration
+	lastConnectionFailedTimestamp          int64
+	lastActiveRequestsCountChangeTimestamp int64
+	firstConnectionTimestamp               int64
+	lastAccessedTimestamp                  int64
 
 	//stats objects
 	responseTimeDist     *stats.Distribution //to stats in the overall time
@@ -140,11 +140,11 @@ func (o *Stats) IncrementNumRequests() {
 func (o *Stats) IncrementActiveRequestsCount() {
 	atomic.AddInt64(&o.activeRequestsCount, 1)
 	o.requestCountInWindow.Increment()
-	currentTime := time.Duration(time.Now().UnixNano())
-	o.lastActiveRequestsCountChangeTimestamp = currentTime
-	o.lastAccessedTimestamp = currentTime
-	if o.firstConnectionTimestamp == time.Duration(0) {
-		o.firstConnectionTimestamp = currentTime
+	currentTime := time.Now().UnixNano()
+	atomic.StoreInt64(&o.lastActiveRequestsCountChangeTimestamp, currentTime)
+	atomic.StoreInt64(&o.lastAccessedTimestamp, currentTime)
+	if o.firstConnectionTimestamp == int64(0) {
+		atomic.StoreInt64(&o.firstConnectionTimestamp, currentTime)
 	}
 }
 
@@ -153,14 +153,14 @@ func (o *Stats) DecrementActiveRequestsCount() {
 	if atomic.AddInt64(&o.activeRequestsCount, -1) < int64(0) {
 		atomic.StoreInt64(&o.activeRequestsCount, 0)
 	}
-	o.lastActiveRequestsCountChangeTimestamp = time.Duration(time.Now().UnixNano())
+	atomic.StoreInt64(&o.lastActiveRequestsCountChangeTimestamp, time.Now().UnixNano())
 }
 
 //GetActiveRequestsCount ...
 func (o *Stats) GetActiveRequestsCount(currentTime time.Duration) int64 {
 	count := atomic.LoadInt64(&o.activeRequestsCount)
 
-	if currentTime-o.lastActiveRequestsCountChangeTimestamp > o.ActiveRequestsCountTimeout || count < 0 {
+	if currentTime- time.Duration(o.lastActiveRequestsCountChangeTimestamp) > o.ActiveRequestsCountTimeout || count < 0 {
 		atomic.StoreInt64(&o.activeRequestsCount, 0)
 		return 0
 	}
@@ -217,11 +217,11 @@ func (o *Stats) getCircuitBreakerBlackoutPeriod() time.Duration {
 func (o *Stats) getCircuitBreakerTimeout() time.Duration {
 	blackOutPeriod := o.getCircuitBreakerBlackoutPeriod()
 
-	if blackOutPeriod <= 0 {
+	if blackOutPeriod <= time.Duration(0) {
 		return time.Duration(0)
 	}
 
-	return o.lastConnectionFailedTimestamp + blackOutPeriod
+	return time.Duration(o.lastConnectionFailedTimestamp) + blackOutPeriod
 }
 
 //IsCircuitBreakerTripped ...
@@ -235,7 +235,7 @@ func (o *Stats) IsCircuitBreakerTripped(currentTime time.Duration) bool {
 
 //IncrementSuccessiveConnectionFailureCount ...
 func (o *Stats) IncrementSuccessiveConnectionFailureCount() {
-	o.lastConnectionFailedTimestamp = time.Duration(time.Now().UnixNano())
+	atomic.StoreInt64(&o.lastConnectionFailedTimestamp,  time.Now().UnixNano())
 	atomic.AddInt64(&o.successiveConnectionFailureCount, 1)
 	atomic.AddInt64(&o.totalCircuitBreakerBlackOutPeriod, int64(o.getCircuitBreakerBlackoutPeriod()))
 }

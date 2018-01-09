@@ -1,7 +1,8 @@
 package httpclient
 
 import (
-	"io/ioutil"
+	"io"
+	"bytes"
 	"net/http"
 	"net/url"
 )
@@ -21,8 +22,12 @@ func NewHTTPResponse(resp *http.Response) *HTTPResponse {
 
 //GetPayload ...
 func (r *HTTPResponse) GetPayload() ([]byte, error) {
-	defer r.Response.Body.Close()
-	return ioutil.ReadAll(r.Response.Body)
+	if len(r.payload) > 0 {
+		return r.payload, nil
+	}
+	buffer := bytes.NewBuffer(r.payload)
+	_, err := io.Copy(buffer, r.Response.Body)
+	return r.payload, err
 }
 
 //HasPayload ...
@@ -42,5 +47,10 @@ func (r *HTTPResponse) GetHeaders() map[string][]string {
 
 //GetRequestedURI ...
 func (r *HTTPResponse) GetRequestedURI() *url.URL {
-	return r.Request.URL
+	return r.Response.Request.URL
+}
+
+//GetStatusCode ...
+func (r *HTTPResponse)GetStatusCode() int {
+	return r.Response.StatusCode
 }

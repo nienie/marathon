@@ -31,16 +31,13 @@ func (c *BaseLoadBalancerClient) ExecuteWithLoadBalancer(ctx context.Context, re
 		if ratelimit.Allow(request.GetURI(), serverStats, requestConfig) == false {
 			return nil, errors.NewClientError(errors.ClientThrottled, nil)
 		}
-		finalURI, err := c.ReconstructURIWithServer(server, request.GetURI())
-		if err != nil {
-			return nil, err
-		}
-		requestForServer := request.ReplaceURI(finalURI)
+		finalURI := c.ReconstructURIWithServer(server, request.GetURI())
+		request.ReplaceURI(finalURI)
 		watch := metric.NewBasicStopWatch()
 		watch.Start()
-		response, err := c.Client.Execute(ctx, requestForServer, requestConfig)
+		response, err := c.Client.Execute(ctx, request, requestConfig)
 		watch.Stop()
-		metric.RPC(ctx, requestForServer, response, err, watch.GetDuration())
+		metric.RPC(ctx, request, response, err, watch.GetDuration())
 		return response, err
 	})
 	return loadBalancerCommand.Execute(ctx, serverOperation)

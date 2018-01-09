@@ -30,7 +30,7 @@ type LoadBalancerHTTPClient struct {
 }
 
 //NewHTTPLoadBalancerClient ...
-func NewHTTPLoadBalancerClient(lb loadbalancer.LoadBalancer, clientConfig config.ClientConfig) *LoadBalancerHTTPClient {
+func NewHTTPLoadBalancerClient(clientConfig config.ClientConfig, lb loadbalancer.LoadBalancer) *LoadBalancerHTTPClient {
 	//create load balancer context
 	loadBalancerContext := loadbalancer.NewLoadBalancerContext(clientConfig, lb)
 	//create load balancer client
@@ -57,15 +57,18 @@ func NewHTTPLoadBalancerClient(lb loadbalancer.LoadBalancer, clientConfig config
 		BeforeHooks:            make([]BeforeHTTPHook, 0),
 		AfterHooks:             make([]AfterHTTHook, 0),
 	}
-	//load balancer context correlate to http client
+	//load balancer context correlate with http client
 	loadBalancerClient.Client = httpClient
 	return httpClient
 }
 
 //Do ...
-func (c *LoadBalancerHTTPClient) Do(ctx context.Context, req *http.Request, requestConfig config.ClientConfig) (*http.Response, error) {
+func (c *LoadBalancerHTTPClient) Do(ctx context.Context, request *HTTPRequest, requestConfig config.ClientConfig) (*http.Response, error) {
+	if request == nil || request.Request == nil {
+		return nil, fmt.Errorf("wrong type, request is nil")
+	}
+	req := request.GetRawRequest()
 	c.beforeHTTPHook(ctx, req)
-	request := CreateHTTPRequest(req, requestConfig)
 	resp, err := c.BaseLoadBalancerClient.ExecuteWithLoadBalancer(ctx, request, requestConfig)
 	if err != nil || resp == nil {
 		c.afterHTTPHook(ctx, req, nil, err)
@@ -85,7 +88,7 @@ func (c *LoadBalancerHTTPClient) Execute(ctx context.Context, request client.Req
 	return c.ExecuteHTTP(ctx, req, requestConfig)
 }
 
-//ExecuteHTTP ...
+//ExecuteHTTP Do not Directly Use...
 func (c *LoadBalancerHTTPClient) ExecuteHTTP(ctx context.Context, request *HTTPRequest, requestConfig config.ClientConfig) (*HTTPResponse, error) {
 	response, err := c.Client.Do(request.GetRawRequest())
 	if err != nil {

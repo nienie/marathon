@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/nienie/marathon/client"
 	"github.com/nienie/marathon/config"
 )
 
@@ -23,17 +22,20 @@ func NewHTTPRequest(method, urlStr string, body io.Reader, loadBalancerKey inter
 	}
 	rr := &HTTPRequest{
 		Request:         r,
-		loadBalancerKey: loadBalancerKey,
+		loadBalancerKey:	 loadBalancerKey,
 	}
 	return rr, nil
 }
 
 //CreateHTTPRequest ...
-func CreateHTTPRequest(r *http.Request, clientConfig config.ClientConfig) *HTTPRequest {
-	return &HTTPRequest{
+func CreateHTTPRequest(r *http.Request, requestConfig config.ClientConfig) *HTTPRequest {
+	rr := &HTTPRequest{
 		Request:         r,
-		loadBalancerKey: clientConfig.GetPropertyAsString(config.LoadBalancerKey, config.DefaultLoadBalancerKey),
 	}
+	if requestConfig != nil {
+		rr.loadBalancerKey = requestConfig.GetPropertyAsString(config.LoadBalancerKey, config.DefaultLoadBalancerKey)
+	}
+	return rr
 }
 
 //GetURI ...
@@ -64,6 +66,6 @@ func (r *HTTPRequest) GetRawRequest() *http.Request {
 }
 
 //ReplaceURI ...
-func (r *HTTPRequest) ReplaceURI(newURI *url.URL) client.Request {
-	return r.SetURI(newURI)
+func (r *HTTPRequest) ReplaceURI(newURI *url.URL) {
+	r.SetURI(newURI)
 }

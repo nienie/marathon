@@ -15,5 +15,5 @@ type Request interface {
 	//GetIsRetriable ...
 	//GetIsRetriable() bool
 
-	ReplaceURI(*url.URL) Request
+	ReplaceURI(*url.URL)
 }

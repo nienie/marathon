@@ -5,6 +5,38 @@ import (
 	"regexp"
 )
 
+var (
+	errorConverters = make([]ErrorConverter, 0)
+)
+
+//ErrorConverter ...
+type ErrorConverter func(error)ClientError
+
+
+var defaultErrorConverter = func (err error) ClientError {
+	if err == nil {
+		return NewClientError(OK, nil)
+	}
+	str := err.Error()
+
+	re := regexp.MustCompile(`getsockopt: connection refused`)
+	if re.MatchString(str) {
+		return NewClientError(ConnectException, err)
+	}
+
+	re = regexp.MustCompile(`dial.*i/o timeout`)
+	if re.MatchString(str) {
+		return NewClientError(SocketTimeoutException, err)
+	}
+
+	re = regexp.MustCompile(`read.*i/o timeout`)
+	if re.MatchString(str) {
+		return NewClientError(ReadTimeoutException, err)
+	}
+
+	return NewClientError(General, err)
+}
+
 //ClientError ...
 type ClientError struct {
 	errorType ErrorType
@@ -33,27 +65,19 @@ func (o ClientError) GetErrType() ErrorType {
 	return o.errorType
 }
 
+//RegisterErrorConverters ...
+func RegisterErrorConverters(converters ...ErrorConverter) {
+	errorConverters = append(errorConverters, converters...)
+}
+
 //ConvertError ...
 func ConvertError(err error) ClientError {
-	if err == nil {
-		return NewClientError(OK, nil)
-	}
-	str := err.Error()
-
-	re := regexp.MustCompile(`getsockopt: connection refused`)
-	if re.MatchString(str) {
-		return NewClientError(ConnectException, err)
+	for _, converter := range errorConverters {
+		clientErr := converter(err)
+		if clientErr.GetErrType() != OK {
+			return clientErr
+		}
 	}
 
-	re = regexp.MustCompile(`dial.*i/o timeout`)
-	if re.MatchString(str) {
-		return NewClientError(SocketTimeoutException, err)
-	}
-
-	re = regexp.MustCompile(`read.*i/o timeout`)
-	if re.MatchString(str) {
-		return NewClientError(ReadTimeoutException, err)
-	}
-
-	return NewClientError(General, err)
+	return defaultErrorConverter(err)
 }

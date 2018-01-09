@@ -18,7 +18,7 @@ func NewDataPublisher(accumulator Accumulator, interval time.Duration) *DataPubl
 	return &DataPublisher{
 		dataAccumulator: accumulator,
 		interval:        interval,
-		stop:            make(chan bool),
+		stop:            make(chan bool, 1),
 		isRunning:       int32(0),
 	}
 }

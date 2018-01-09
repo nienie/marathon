@@ -16,4 +16,7 @@ type Response interface {
 	GetRequestedURI() *url.URL
 	//GetHeaders ...
 	GetHeaders() map[string][]string
+	//GetStatusCode ...
+	GetStatusCode() int
+
 }

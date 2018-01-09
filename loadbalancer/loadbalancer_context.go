@@ -58,16 +58,22 @@ func (o *Context) NoteRequestCompletion(stats *server.Stats, response client.Res
 			stats.IncrementSuccessiveConnectionFailureCount()
 			stats.AddToFailureCount()
 			if stats.IsCircuitBreakerTripped(time.Duration(time.Now().UnixNano())) {
-				o.LoadBalancer.MarkServerTempDown(stats.Server)
+				if o.LoadBalancer != nil {
+					o.LoadBalancer.MarkServerTempDown(stats.Server)
+				}
 			}
 			return
 		}
 		stats.ClearSuccessiveConnectionFailureCount()
-		o.LoadBalancer.MarkServerReady(stats.Server)
+		if o.LoadBalancer != nil {
+			o.LoadBalancer.MarkServerReady(stats.Server)
+		}
 		return
 	}
 	stats.ClearSuccessiveConnectionFailureCount()
-	o.LoadBalancer.MarkServerReady(stats.Server)
+	if o.LoadBalancer != nil {
+		o.LoadBalancer.MarkServerReady(stats.Server)
+	}
 	return
 }
 
@@ -83,12 +89,16 @@ func (o *Context) NoteError(stats *server.Stats, request client.Request, err err
 			stats.IncrementSuccessiveConnectionFailureCount()
 			stats.AddToFailureCount()
 			if stats.IsCircuitBreakerTripped(time.Duration(time.Now().UnixNano())) {
-				o.LoadBalancer.MarkServerTempDown(stats.Server)
+				if o.LoadBalancer != nil {
+					o.LoadBalancer.MarkServerTempDown(stats.Server)
+				}
 			}
 			return
 		}
 		stats.ClearSuccessiveConnectionFailureCount()
-		o.LoadBalancer.MarkServerReady(stats.Server)
+		if o.LoadBalancer != nil {
+			o.LoadBalancer.MarkServerReady(stats.Server)
+		}
 		return
 	}
 
@@ -169,13 +179,14 @@ func (o *Context) GetServerFromLoadBalancer(original *url.URL, loadBalancerKey i
 }
 
 //ReconstructURIWithServer ...
-func (o *Context) ReconstructURIWithServer(svr *server.Server, original *url.URL) (*url.URL, error) {
-	host := svr.GetHost()
-	port := svr.GetPort()
+func (o *Context) ReconstructURIWithServer(svr *server.Server, original *url.URL) (*url.URL) {
+	if svr == nil || original == nil {
+		return original
+	}
 	scheme := svr.GetScheme()
 
 	if original.Scheme == scheme && original.Host == svr.GetHostPort() {
-		return original, nil
+		return original
 	}
 
 	if len(scheme) == 0 {
@@ -186,29 +197,9 @@ func (o *Context) ReconstructURIWithServer(svr *server.Server, original *url.URL
 		_, scheme = o.deriveSchemeAndPortFromPartialURI(original)
 	}
 
-	newURL := scheme + "://"
-
-	if original.User != nil {
-		newURL = newURL + original.User.Username() + "@"
-	}
-
-	newURL = newURL + host
-
-	if port > 0 {
-		newURL = newURL + ":" + fmt.Sprint(port)
-	}
-
-	newURL = newURL + original.Path
-
-	if len(original.RawQuery) > 0 {
-		newURL = newURL + "?" + original.RawQuery
-	}
-
-	if len(original.Fragment) > 0 {
-		newURL = newURL + "#" + original.Fragment
-	}
-
-	return url.Parse(newURL)
+	original.Scheme = scheme
+	original.Host = svr.GetHostPort()
+	return original
 }
 
 //GetServerStats ...
