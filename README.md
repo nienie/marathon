@@ -3,7 +3,7 @@ marathon
 
 # 说明
 **marathon**是用**Go**编写的一个**HTTP的RPC调用框架**，提供了**HttpClient**，通过**配置**的方式，
-可以让**HttpClient**带上**服务发现**，**软负载均衡**，**健康检查**，**故障自动摘除**，**限流**，**监控统计上报**等功能。
+可以让**HttpClient**带上**服务发现**，**软负载均衡**，**健康检查**，**故障自动摘除**，**限流**，**监控统计上报**，**日志打印**等功能。
     
 目前流行的微服务架构中，经常会有很多HTTP请求调用。看似简单的HTTP的调用，其实也有很多技术的细节需要考虑，
 例如:
@@ -28,7 +28,7 @@ marathon
     
 项目名字**marathon**，即中文的“**马拉松**”。之所以将项目名字取名为**marathon**，是两方面的考量：
 第一，本人非常喜欢跑步，marathon是距离最长的跑步赛事，也是奥运会最后的比赛项目；
-第二，本项目都是我个人独自利用自己的业余时间设计和编写，前前后后经历4个多月时间，这个项目的开发对我来说也是一项marathon式的长跑。 
+第二，本项目都是我个人独自利用业余时间设计和编写，前前后后经历4个多月时间，这个项目的开发对我来说也是一项marathon式的长跑。 
    
 # 特点
 
@@ -38,7 +38,7 @@ marathon
 用户只需要将服务发现的逻辑实现在server.List的GetInitialListOfServers和GetUpdatedListOfServers
 这两个方法中，marathon的HttpClient就具有服务发现的功能。
 
----
+-----------------
 
 2. 软负载均衡。
     
@@ -46,7 +46,7 @@ marathon
 LeastConnection（最少连接数）、LeastResponseTime（最少响应时间）四中常用的负载均衡算法来选取机器。marathon提供软负载均衡的框架和负载均衡算法的抽象loadbalancer.Rule，
 用户可以很方便的开发自己的负载均衡算法。
 
----
+-----------------
 
 3. 健康检查。
     
@@ -54,14 +54,14 @@ LeastConnection（最少连接数）、LeastResponseTime（最少响应时间）
 重新添加到可选机器列表中。marathon提供周期性检查机器是否可用的框架，并对健康检查提供抽象loadbalancer.Ping，用户只需要实现这个interface，就可以实现
 自己的健康检查逻辑。
 
----
+-----------------
 
 4. 故障临时自动摘除。
     
     当访问某台机器时，某类错误连续出现多次时(例如http_status是502/503/504或者连接拒绝)，很有可能是机器出现故障，需要临时摘除，等休眠一段时间后再访问。
 真正从可选列表中摘除是健康检查模块来做。marathon集成了故障临时自动摘除的逻辑。用户可以配置连续出错的阈值，自定义哪些出错的类型是被认为是需要摘除的错误。    
     
----
+-----------------
 
 5. 限流。
     
@@ -69,27 +69,33 @@ LeastConnection（最少连接数）、LeastResponseTime（最少响应时间）
 marathon内置限流模块，提供MaxConcurrency/MaxRequest(最大并发/最大请求数)、TokenBucket(令牌桶)和LeakyBucket(漏桶)三种限流算法，可以通过配置的方式
 定制针对某个接口的限流策略，非常自由灵活。同时marathon提供框架，方便用户开发自己的限流算法。
     
----
+-----------------
 
 6. 监控统计上报。
     
     为了保证程序的稳定性，添加监控、统计上报和报警是必不可少。marathon有对访问过程中进行埋点，也提供抽象的方法metric.Collector，只要实现Collector的方法就能够实现数据上报。
 
----
+-----------------
  
 7. 配置。 
 
     marathon提供对配置的抽象config.ClientConfig。所有功能都有默认的配置，因此及时不传任何配置，marathon都能够正常运行，也允许用户自定义配置来覆盖默认值。
 同时，所有这些功能都可以通过配置来选择打开或者关闭。配置的粒度可以细化到针对某个接口做个性化配置项，而达到对某个接口进行差异化的访问。
    
----
+-----------------
 
 8. HttpClient。
 
-    marathon对官方的HttpClient做了简单的封装，让原生的HttpClient具有了服务发现、软负载均衡、健康检查、故障临时摘除、限流、统计上报、配置等功能；
-保留了和原生HttpClient基本上相同的API，方便使用。同时，具有良好的可扩展性，设置了很多可以插入执行的点，用户只需要注册插件函数，然后就可以扩展HttpClient的功能。
+    marathon对官方的HttpClient做了简单的封装，让原生的HttpClient具有了服务发现、软负载均衡、健康检查、故障临时摘除、限流、统计上报、配置、日志打印等功能；
+保留了和原生HttpClient基本上相同的API，方便使用。
 
----
+-----------------
+
+9. 可扩展性。
+    
+    marathon在设计时就考虑到程序的可扩展性。很多功能都是采用可配置的插件，用户自定义的功能只需要实现插件的接口，然后注册到marathon，就能够得到执行。
+
+-----------------
 
 # 使用
 
@@ -102,7 +108,7 @@ marathon内置限流模块，提供MaxConcurrency/MaxRequest(最大并发/最大
     demo.RequestTimeout = 300ms
 ```
     
----
+-----------------
 
 2. 负载均衡。
 
@@ -122,7 +128,7 @@ marathon内置限流模块，提供MaxConcurrency/MaxRequest(最大并发/最大
     //设置健康检查的执行策略策略
     //提供ParallelStrategy（并发执行健康检查，默认）和SerialStrategy（串行执行健康检查）
     //也可以实现ping.Strategy接口的方法，实现自己的健康检查执行策略。
-    pingStrategy := ping.ParallelStrategy()
+    pingStrategy := ping.NewParallelStrategy()
     
     //Step 4:
     //读取配置
@@ -146,7 +152,7 @@ marathon内置限流模块，提供MaxConcurrency/MaxRequest(最大并发/最大
     lb.AddServers(servers)
 ```
 
---- 
+-----------------
 
 3. 服务发现。
     
@@ -182,7 +188,7 @@ marathon内置限流模块，提供MaxConcurrency/MaxRequest(最大并发/最大
     lb := loadbalancer.NewDynamicServerListLoadBalancer(clientConfig, rule, &ServiceDiscoveryList{})
 ```
 
----
+-----------------
 
 4. 健康检查。 
     
@@ -222,7 +228,7 @@ marathon内置限流模块，提供MaxConcurrency/MaxRequest(最大并发/最大
     }
 ```
         
----
+-----------------
 
 5. 限流。
 
@@ -253,7 +259,7 @@ TokenBucket(令牌桶)和LeakyBucket(漏桶)三种限流算法。使用示例如
     requestConfig.Set("ratelimit.LeakyBucketInterval", 50 * time.Millisecond)
 ```
 
----
+-----------------
 
 6. 监控统计上报。
     
@@ -274,17 +280,24 @@ TokenBucket(令牌桶)和LeakyBucket(漏桶)三种限流算法。使用示例如
     metric.RegisterCollector(&MyCollector{})
 ```    
     
----
+-----------------
 
 7. HttpClient。
 
     HttpClient使用示例：
 
 ``` go
-
     //Step 1:
     //定义带loadbalancer 功能的httpClient
     httpClient := httpclient.NewHTTPLoadBalancerClient(clientConfig, lb)
+    //自定义给所有的请求统一加上某些Header
+    httpClient.RegisterBeforeHook(func(ctx context.Context, req *http.Request){
+        req.Header.Set("Marathon-Extension", "marathon")
+    })
+    //统一打印日志
+    httpClient.RegisterAfterHook(func(ctx context.Context, req *http.Request, resp *http.Response, err error) {
+        //TODO: Add you code
+    })
     
     //Step 2:
     //构造请求。
