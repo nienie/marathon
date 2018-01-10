@@ -56,7 +56,7 @@ LeastConnection（最少连接数）、LeastResponseTime（最少响应时间）
 
 -----------------
 
-4. 故障临时自动摘除。
+4. 故障临时摘除。
     
     当访问某台机器时，某类错误连续出现多次时(例如http_status是502/503/504或者连接拒绝)，很有可能是机器出现故障，需要临时摘除，等休眠一段时间后再访问。
 真正从可选列表中摘除是健康检查模块来做。marathon集成了故障临时自动摘除的逻辑。用户可以配置连续出错的阈值，自定义哪些出错的类型是被认为是需要摘除的错误。    
@@ -93,7 +93,7 @@ marathon内置限流模块，提供MaxConcurrency/MaxRequest(最大并发/最大
 
 9. 可扩展性。
     
-    marathon在设计时就考虑到程序的可扩展性。很多功能都是采用可配置的插件，用户自定义的功能只需要实现插件的接口，然后注册到marathon，就能够得到执行。
+    marathon在设计时就考虑到程序的可扩展性。很多功能都是采用可配置的插件设计，用户自定义的功能只需要实现插件的接口，然后注册到marathon，就能够得到执行。
 
 -----------------
 
@@ -293,10 +293,6 @@ TokenBucket(令牌桶)和LeakyBucket(漏桶)三种限流算法。使用示例如
     //自定义给所有的请求统一加上某些Header
     httpClient.RegisterBeforeHook(func(ctx context.Context, req *http.Request){
         req.Header.Set("Marathon-Extension", "marathon")
-    })
-    //统一打印日志
-    httpClient.RegisterAfterHook(func(ctx context.Context, req *http.Request, resp *http.Response, err error) {
-        //TODO: Add you code
     })
     
     //Step 2:

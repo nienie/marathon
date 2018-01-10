@@ -9,8 +9,23 @@ import (
 	"github.com/nienie/marathon/config"
 	"github.com/nienie/marathon/errors"
 	"github.com/nienie/marathon/loadbalancer"
+	"github.com/nienie/marathon/logger"
 
 	transport "github.com/mreiferson/go-httpclient"
+)
+
+var (
+	loggerHook AfterHTTHook = func(ctx context.Context, req *http.Request, resp *http.Response, err error) {
+		format := "method=%s||host=%s||uri=%s||args=%s||body=%v||request_header=%v||response=%v||status_code=%d||response_header=%v||err=%v"
+		if err != nil || resp == nil{
+			logger.Warnf(ctx, format, req.Method, req.URL.Host, req.URL.Path, req.URL.RawQuery,
+				req.Body, req.Header, nil, 0, nil, err)
+			return
+		}
+		logger.Infof(ctx, format, req.Method, req.URL.Host, req.URL.Path, req.URL.RawQuery, req.Body,
+			req.Header, resp.Body, resp.StatusCode, resp.Header, err)
+		return
+	}
 )
 
 //BeforeHTTPHook ...
@@ -55,7 +70,7 @@ func NewHTTPLoadBalancerClient(clientConfig config.ClientConfig, lb loadbalancer
 		HTTPClientName:         clientConfig.GetClientName(),
 		Transport:              trans,
 		BeforeHooks:            make([]BeforeHTTPHook, 0),
-		AfterHooks:             make([]AfterHTTHook, 0),
+		AfterHooks:             []AfterHTTHook{loggerHook},
 	}
 	//load balancer context correlate with http client
 	loadBalancerClient.Client = httpClient
@@ -97,7 +112,7 @@ func (c *LoadBalancerHTTPClient) ExecuteHTTP(ctx context.Context, request *HTTPR
 	if response.StatusCode == http.StatusBadGateway ||
 		response.StatusCode == http.StatusServiceUnavailable ||
 		response.StatusCode == http.StatusGatewayTimeout { //502/503/504
-		return nil, errors.NewClientError(errors.ServerThrottled, nil)
+		return nil, errors.NewClientError(errors.ServerThrottled, fmt.Errorf("http status code = %d", response.StatusCode))
 	}
 	return NewHTTPResponse(response), nil
 }
@@ -108,13 +123,13 @@ func (c *LoadBalancerHTTPClient) Shutdown() {
 }
 
 //RegisterBeforeHook ...
-func (c *LoadBalancerHTTPClient) RegisterBeforeHook(h BeforeHTTPHook) {
-	c.BeforeHooks = append(c.BeforeHooks, h)
+func (c *LoadBalancerHTTPClient) RegisterBeforeHook(hooks ...BeforeHTTPHook) {
+	c.BeforeHooks = append(c.BeforeHooks, hooks...)
 }
 
 //RegisterAfterHook ...
-func (c *LoadBalancerHTTPClient) RegisterAfterHook(h AfterHTTHook) {
-	c.AfterHooks = append(c.AfterHooks, h)
+func (c *LoadBalancerHTTPClient) RegisterAfterHook(hooks ...AfterHTTHook) {
+	c.AfterHooks = append(c.AfterHooks, hooks...)
 }
 
 func (c *LoadBalancerHTTPClient) beforeHTTPHook(ctx context.Context, req *http.Request) {
@@ -128,3 +143,5 @@ func (c *LoadBalancerHTTPClient) afterHTTPHook(ctx context.Context, req *http.Re
 		h(ctx, req, resp, err)
 	}
 }
+
+
