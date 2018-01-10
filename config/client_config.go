@@ -90,7 +90,7 @@ func (c *DefaultClientConfig) putDefaultFloat64Property(propName string, default
 }
 
 func (c *DefaultClientConfig) putDefaultDurationProperty(propName string, defaultValue time.Duration) {
-	value := c.ExternalProperties.GetDuration(propName, defaultValue)
+	value := c.ExternalProperties.GetParsedDuration(propName, defaultValue)
 	c.setPropertyInternal(propName, value)
 }
 
@@ -133,9 +133,7 @@ func (c *DefaultClientConfig) LoadProperties(clientName string) {
 	props := c.ExternalProperties.FilterStripPrefix(clientName + ".")
 	for _, key := range props.Keys() {
 		value := props.GetString(key, "")
-		if len(value) > 0 {
-			c.setPropertyInternal(key, value)
-		}
+		c.setPropertyInternal(key, value)
 	}
 }
 
@@ -156,7 +154,7 @@ func (c *DefaultClientConfig) GetPropertyAsBool(configKey string, defaultValue b
 
 //GetPropertyAsDuration ...
 func (c *DefaultClientConfig) GetPropertyAsDuration(configKey string, defaultValue time.Duration) time.Duration {
-	return c.InternalProperties.GetDuration(configKey, defaultValue)
+	return c.InternalProperties.GetParsedDuration(configKey, defaultValue)
 }
 
 //SetProperty ...
