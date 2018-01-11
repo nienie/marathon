@@ -127,11 +127,11 @@ func (o *Context) deriveSchemeAndPortFromPartialURI(uri *url.URL) (port int, sch
 		}
 		port = int(p)
 	}
-	if port <= 0 && !isSecure {
-		port = 80
-	} else if port <= 0 && isSecure {
-		port = 443
-	}
+	//if port <= 0 && !isSecure {
+	//	port = 80
+	//} else if port <= 0 && isSecure {
+	//	port = 443
+	//}
 	if len(scheme) == 0 {
 		if isSecure {
 			scheme = "https"

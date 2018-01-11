@@ -103,9 +103,7 @@ func ParseServerListString(svrListStr string) ([]*Server, error) {
 		host = svr
 
 		server := NewServer(scheme, host, port)
-		if len(cluster) != 0 {
-			server.SetCluster(cluster)
-		}
+		server.SetCluster(cluster)
 		ret = append(ret, server)
 	}
 	return ret, nil

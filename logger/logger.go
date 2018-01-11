@@ -58,28 +58,28 @@ func newDefaultLogger() *defaultLogger {
 
 //Debugf ...
 func (l *defaultLogger)Debugf(ctx context.Context, format string, args ...interface{}) {
-    if l.level >= Debug {
+    if l.level <= Debug {
         log.Printf("[DEBUG] " + format, args...)
     }
 }
 
 //Infof ...
 func (l *defaultLogger)Infof(ctx context.Context, format string, args ...interface{}) {
-    if l.level >= Info {
+    if l.level <= Info {
         log.Printf("[INFO] " + format, args...)
     }
 }
 
 //Warnf ...
 func (l *defaultLogger)Warnf(ctx context.Context, format string, args ...interface{}) {
-    if l.level >= Warn {
+    if l.level <= Warn {
         log.Printf("[WARN] " + format, args...)
     }
 }
 
 //Errorf ...
 func (l *defaultLogger)Errorf(ctx context.Context, format string, args ...interface{}) {
-    if l.level >= Error {
+    if l.level <= Error {
         log.Printf("[ERROR] " + format, args...)
     }
 }

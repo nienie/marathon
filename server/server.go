@@ -2,177 +2,122 @@ package server
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
 )
 
 const (
-	//IDFormat server identifier format
-	IDFormat = "%s:%d"
 	//ClusterUnknown ...
 	ClusterUnknown = "unknown"
+	//DefaultWight ...
+	DefaultWight = 10
 )
 
 //Server represents a typical server, use Host:Port identifier
 type Server struct {
-	id           string
-	host         string
-	port         int
-	scheme       string
-	isAliveFlag  bool
-	readyToServe bool
-	cluster      string
-	tempDown     bool
+	Host 		 string		`json:"host"`
+	Port 		 int		`json:"port"`
+	Scheme 		 string		`json:"scheme"`
+	IsAliveFlag  bool		`json:"is_alive"`
+	TempDown 	 bool		`json:"-"`
+	Cluster 	 string		`json:"cluster"`
+	Weight       int		`json:"weight"`
 }
 
 //NewServer create a server instance
 func NewServer(scheme string, host string, port int) *Server {
-	s := &Server{
-		scheme:       scheme,
-		host:         host,
-		port:         port,
-		id:           fmt.Sprintf(IDFormat, host, port),
-		isAliveFlag:  true,
-		readyToServe: true,
-		tempDown:     false,
-		cluster:      ClusterUnknown,
+	return &Server{
+		Scheme:       scheme,
+		Host:         host,
+		Port:         port,
+		IsAliveFlag:  true,
+		TempDown:     false,
+		Cluster:      ClusterUnknown,
+		Weight: 	  DefaultWight,
 	}
-	return s
-}
-
-//SetID ...
-func (s *Server) SetID(id string) {
-	scheme, host, port, err := parseID(id)
-	if err != nil {
-		return
-	}
-
-	s.scheme = scheme
-	s.host = host
-	s.port = port
-
-	s.id = fmt.Sprintf(IDFormat, host, port)
-	return
-}
-
-func parseID(id string) (scheme string, host string, port int, err error) {
-	if len(id) == 0 {
-		return
-	}
-
-	if strings.HasPrefix(id, "http://") {
-		id = strings.TrimLeft(id, "http://")
-		scheme = "http"
-	} else if strings.HasPrefix(id, "https://") {
-		id = strings.TrimLeft(id, "https://")
-		scheme = "https"
-	}
-
-	if strings.Contains(id, "/") {
-		slashIdx := strings.Index(id, "/")
-		id = id[:slashIdx]
-	}
-
-	colonIdx := strings.Index(id, ":")
-	if colonIdx == -1 {
-		host = id
-		port = 80
-		return
-	}
-
-	host = id[:colonIdx]
-	p, err := strconv.ParseInt(id[colonIdx+1:], 10, 32)
-	if err != nil {
-		return
-	}
-	port = int(p)
-
-	return
-}
-
-//GetID ...
-func (s *Server) GetID() string {
-	return s.id
 }
 
 //SetHost ...
-func (s *Server) SetHost(host string) {
-	s.host = host
-	s.id = fmt.Sprintf(IDFormat, s.host, s.port)
+func (s *Server) SetHost(host string) *Server {
+	s.Host = host
+	return s
 }
 
 //GetHost ...
 func (s *Server) GetHost() string {
-	return s.host
+	return s.Host
 }
 
 //SetPort ...
-func (s *Server) SetPort(port int) {
-	s.port = port
-	s.id = fmt.Sprintf(IDFormat, s.host, s.port)
+func (s *Server) SetPort(port int) *Server {
+	s.Port = port
+	return s
 }
 
 //GetPort ...
 func (s *Server) GetPort() int {
-	return s.port
+	return s.Port
 }
 
 //GetHostPort ...
 func (s *Server) GetHostPort() string {
-	if s.port <= 0 {
-		return s.host
+	if s.Port <= 0 {
+		return s.Host
 	}
-	return fmt.Sprintf(IDFormat, s.host, s.port)
+	return fmt.Sprintf("%s:%d", s.Host, s.Port)
 }
 
 //GetScheme ...
 func (s *Server) GetScheme() string {
-	return s.scheme
+	return s.Scheme
 }
 
 //SetAlive ...
-func (s *Server) SetAlive(isAliveFlag bool) {
-	s.isAliveFlag = isAliveFlag
+func (s *Server) SetAlive(isAliveFlag bool) *Server{
+	s.IsAliveFlag = isAliveFlag
+	return s
 }
 
 //IsAlive ...
 func (s *Server) IsAlive() bool {
-	return s.isAliveFlag
-}
-
-//SetReadyToServe ...
-func (s *Server) SetReadyToServe(readyToServe bool) {
-	s.readyToServe = readyToServe
-}
-
-//IsReadyToServe ...
-func (s *Server) IsReadyToServe() bool {
-	return s.readyToServe
+	return s.IsAliveFlag
 }
 
 //Equals ...
 func (s *Server) Equals(ss *Server) bool {
-	return s.GetID() == ss.GetID()
+	return s.GetHostPort() == ss.GetHostPort() && s.GetScheme() == ss.GetScheme()
 }
 
 //GetCluster ...
 func (s *Server) GetCluster() string {
-	return s.cluster
+	return s.Cluster
 }
 
 //SetCluster ...
-func (s *Server) SetCluster(cluster string) {
-	if len(cluster) > 0 {
-		s.cluster = cluster
+func (s *Server) SetCluster(cluster string) *Server{
+	if len(cluster) == 0 {
+		cluster = ClusterUnknown
 	}
+	s.Cluster = cluster
+	return s
 }
 
 //SetTempDown ...
-func (s *Server) SetTempDown(isDown bool) {
-	s.tempDown = isDown
+func (s *Server) SetTempDown(isDown bool) *Server {
+	s.TempDown = isDown
+	return s
 }
 
 //IsTempDown ...
 func (s *Server) IsTempDown() bool {
-	return s.tempDown
+	return s.TempDown
+}
+
+//GetWeight ...
+func (s *Server)GetWeight() int {
+	return s.Weight
+}
+
+//SetWeight ...
+func (s *Server)SetWeight(weight int) *Server {
+	s.Weight = weight
+	return s
 }

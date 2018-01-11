@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/nienie/marathon/stats"
+	"github.com/rcrowley/go-metrics"
 )
 
 const (
@@ -26,41 +27,30 @@ const (
 	DefaultCircuitTrippedTimeoutFactor = 10
 	//DefaultMaxCircuitTrippedTimeout ...
 	DefaultMaxCircuitTrippedTimeout = 10 * time.Second
-	//DefaultBufferSize ...
-	DefaultBufferSize = 60 * 1000 // = 1000 requests / sec for 1 minute
-	//DefaultPublishInterval ...
-	DefaultPublishInterval = 1 * time.Second // = 1 minute
 	//DefaultActiveRequestsCountTimeout ...
-	DefaultActiveRequestsCountTimeout = 60 * time.Second
-	//DefaultFailureCountSlidingWindowInterval ...
-	DefaultFailureCountSlidingWindowInterval = 10 * time.Second
-	//DefaultRequestCountsSlidingWindowInterval ...
-	DefaultRequestCountsSlidingWindowInterval = 60 * time.Second
-)
-
-var (
-	percentiles = []float64{
-		tenPercentile, twentyFivePercentile, fiftyPercentile, seventyFivePercentile, ninetyPercentile,
-		ninetyFivePercentile, ninetyEightPercentile, ninetyNinePercentile, ninetyNinePointFivePercentile,
-	}
+	DefaultActiveRequestsCountTimeout = 30 * time.Second
+	//DefaultFailureCountSlidingWindowSize ...
+	DefaultFailureCountSlidingWindowSize = 10 //store 10 seconds' data
+	//DefaultRequestCountsSlidingWindowSize ...
+	DefaultRequestCountsSlidingWindowSize = 60 //store 60 seconds' data
+	//DefaultResponseTimeWindowSize ...
+	DefaultResponseTimeWindowSize = 60 //store 60 seconds' data
 )
 
 //Stats ...
 type Stats struct {
 	Server *Server
 
-	ConnectionFailureThreshold         int
-	CircuitTrippedTimeoutFactor        int
-	MaxCircuitTrippedTimeout           time.Duration
-	FailureCountSlidingWindowInterval  time.Duration
-	ActiveRequestsCountTimeout         time.Duration
-	RequestCountsSlidingWindowInterval time.Duration
+	ConnectionFailureThreshold  int
+	CircuitTrippedTimeoutFactor int
+	MaxCircuitTrippedTimeout    time.Duration
+	ActiveRequestsCountTimeout  time.Duration
 
 	//for stats
-	totalRequests                     int64
-	activeRequestsCount               int64
-	openConnectionsCount              int64
-	successiveConnectionFailureCount  int64
+	totalRequests                     metrics.Counter
+	activeRequestsCount               metrics.Counter
+	openConnectionsCount              metrics.Counter
+	successiveConnectionFailureCount  metrics.Counter
 	totalCircuitBreakerBlackOutPeriod int64 //nanoseconds
 
 	//record time
@@ -70,76 +60,66 @@ type Stats struct {
 	lastAccessedTimestamp                  int64
 
 	//stats objects
-	responseTimeDist     *stats.Distribution //to stats in the overall time
-	publisher            *stats.DataPublisher
-	dataDist             *stats.DataDistribution // to stats in a recent time-slice
-	serverFailureCounts  *stats.MeasureRate      //server failure counts in a sliding window time
-	requestCountInWindow *stats.MeasureRate      //request count in a window time
+	responseTimeDist     *stats.Distribution  //to stats in the overall time
+	responseTimeInWindow *stats.RollingSample // to stats in a recent time-slice
 
-	//stats objects initial parameters
-	BufferSize      int
-	PublishInterval time.Duration
+	serverFailureCounts  *stats.RollingCounter //server failure counts in a sliding window time
+	requestCountInWindow *stats.RollingCounter //request count in a window time
 }
 
 //NewDefaultServerStats ...
 func NewDefaultServerStats() *Stats {
 	return &Stats{
-		ConnectionFailureThreshold:         DefaultConnectionFailureCountThreshold,
-		CircuitTrippedTimeoutFactor:        DefaultCircuitTrippedTimeoutFactor,
-		MaxCircuitTrippedTimeout:           DefaultMaxCircuitTrippedTimeout,
-		FailureCountSlidingWindowInterval:  DefaultFailureCountSlidingWindowInterval,
-		ActiveRequestsCountTimeout:         DefaultActiveRequestsCountTimeout,
-		RequestCountsSlidingWindowInterval: DefaultRequestCountsSlidingWindowInterval,
-		BufferSize:                         DefaultBufferSize,
-		PublishInterval:                    DefaultPublishInterval,
-		responseTimeDist:                   stats.NewDistribution(),
+		ConnectionFailureThreshold:  DefaultConnectionFailureCountThreshold,
+		CircuitTrippedTimeoutFactor: DefaultCircuitTrippedTimeoutFactor,
+		MaxCircuitTrippedTimeout:    DefaultMaxCircuitTrippedTimeout,
+		ActiveRequestsCountTimeout:  DefaultActiveRequestsCountTimeout,
+		responseTimeDist:            stats.NewDistribution(),
+
+		totalRequests:                    &metrics.StandardCounter{},
+		activeRequestsCount:              &metrics.StandardCounter{},
+		openConnectionsCount:             &metrics.StandardCounter{},
+		successiveConnectionFailureCount: &metrics.StandardCounter{},
+
+		serverFailureCounts:  stats.NewRollingCounter(DefaultFailureCountSlidingWindowSize),
+		requestCountInWindow: stats.NewRollingCounter(DefaultRequestCountsSlidingWindowSize),
+		responseTimeInWindow: stats.NewRollingSample(DefaultResponseTimeWindowSize),
 	}
 }
 
 //Initialize ...
 func (o *Stats) Initialize(svr *Server) {
-	o.serverFailureCounts = stats.NewMeasureRate(o.FailureCountSlidingWindowInterval)
-	o.requestCountInWindow = stats.NewMeasureRate(o.RequestCountsSlidingWindowInterval)
-	if o.publisher == nil {
-		o.dataDist = stats.NewDataDistribution(o.BufferSize, percentiles)
-		o.publisher = stats.NewDataPublisher(o.dataDist, o.PublishInterval)
-		o.publisher.Start()
-	}
 	o.Server = svr
 }
 
 //Close ...
-func (o *Stats) Close() {
-	if o.publisher != nil {
-		o.publisher.Stop()
-	}
-}
+func (o *Stats) Close() {}
 
 //AddToFailureCount increment the count of failure for this server
 func (o *Stats) AddToFailureCount() {
-	o.serverFailureCounts.Increment()
+	o.serverFailureCounts.Inc(int64(1))
 }
 
 //GetFailureCount returns the count of failures in the current window.
 func (o *Stats) GetFailureCount() int64 {
-	return o.serverFailureCounts.GetCurrentCount()
+	return o.serverFailureCounts.Count()
 }
 
 //NoteResponseTime call this method to note the response time after every request.
 func (o *Stats) NoteResponseTime(msecs float64) {
-	o.dataDist.NoteValue(msecs)
 	o.responseTimeDist.NoteValue(msecs)
+	o.responseTimeInWindow.UpdateValue(int64(msecs))
 }
 
 //IncrementNumRequests note the total number of requests.
 func (o *Stats) IncrementNumRequests() {
-	atomic.AddInt64(&o.totalRequests, 1)
+	o.totalRequests.Inc(int64(1))
 }
 
 //IncrementActiveRequestsCount note the active number of requests.
 func (o *Stats) IncrementActiveRequestsCount() {
-	atomic.AddInt64(&o.activeRequestsCount, 1)
-	o.requestCountInWindow.Increment()
+	o.activeRequestsCount.Inc(int64(1))
+	o.requestCountInWindow.Inc(int64(1))
 	currentTime := time.Now().UnixNano()
 	atomic.StoreInt64(&o.lastActiveRequestsCountChangeTimestamp, currentTime)
 	atomic.StoreInt64(&o.lastAccessedTimestamp, currentTime)
@@ -150,18 +130,19 @@ func (o *Stats) IncrementActiveRequestsCount() {
 
 //DecrementActiveRequestsCount ...
 func (o *Stats) DecrementActiveRequestsCount() {
-	if atomic.AddInt64(&o.activeRequestsCount, -1) < int64(0) {
-		atomic.StoreInt64(&o.activeRequestsCount, 0)
+	o.activeRequestsCount.Dec(int64(1))
+	if o.activeRequestsCount.Count() < int64(0) {
+		o.activeRequestsCount.Clear()
 	}
 	atomic.StoreInt64(&o.lastActiveRequestsCountChangeTimestamp, time.Now().UnixNano())
 }
 
 //GetActiveRequestsCount ...
 func (o *Stats) GetActiveRequestsCount(currentTime time.Duration) int64 {
-	count := atomic.LoadInt64(&o.activeRequestsCount)
+	count := o.activeRequestsCount.Count()
 
-	if currentTime- time.Duration(o.lastActiveRequestsCountChangeTimestamp) > o.ActiveRequestsCountTimeout || count < 0 {
-		atomic.StoreInt64(&o.activeRequestsCount, 0)
+	if currentTime-time.Duration(o.lastActiveRequestsCountChangeTimestamp) > o.ActiveRequestsCountTimeout || count < 0 {
+		o.activeRequestsCount.Clear()
 		return 0
 	}
 
@@ -170,33 +151,34 @@ func (o *Stats) GetActiveRequestsCount(currentTime time.Duration) int64 {
 
 //IncrementOpenConnectionsCount ...
 func (o *Stats) IncrementOpenConnectionsCount() {
-	atomic.AddInt64(&o.openConnectionsCount, 1)
+	o.openConnectionsCount.Inc(int64(1))
 }
 
 //DecrementOpenConnectionsCount ...
 func (o *Stats) DecrementOpenConnectionsCount() {
-	if atomic.AddInt64(&o.openConnectionsCount, -1) < 0 {
-		atomic.StoreInt64(&o.openConnectionsCount, 0)
+	o.openConnectionsCount.Dec(int64(1))
+	if o.openConnectionsCount.Count() < 0 {
+		o.openConnectionsCount.Clear()
 	}
 }
 
 //GetOpenConnectionsCount ...
 func (o *Stats) GetOpenConnectionsCount() int64 {
-	return atomic.LoadInt64(&o.openConnectionsCount)
+	return o.openConnectionsCount.Count()
 }
 
 //GetMeasuredRequestsCount ...
 func (o *Stats) GetMeasuredRequestsCount() int64 {
-	return o.requestCountInWindow.GetCount()
+	return o.requestCountInWindow.Count()
 }
 
 //GetMonitoredActiveRequestsCount ...
 func (o *Stats) GetMonitoredActiveRequestsCount() int64 {
-	return atomic.LoadInt64(&o.activeRequestsCount)
+	return o.activeRequestsCount.Count()
 }
 
 func (o *Stats) getCircuitBreakerBlackoutPeriod() time.Duration {
-	failureCount := atomic.LoadInt64(&o.successiveConnectionFailureCount)
+	failureCount := o.successiveConnectionFailureCount.Count()
 	if failureCount < int64(o.ConnectionFailureThreshold) {
 		return time.Duration(0)
 	}
@@ -235,19 +217,19 @@ func (o *Stats) IsCircuitBreakerTripped(currentTime time.Duration) bool {
 
 //IncrementSuccessiveConnectionFailureCount ...
 func (o *Stats) IncrementSuccessiveConnectionFailureCount() {
-	atomic.StoreInt64(&o.lastConnectionFailedTimestamp,  time.Now().UnixNano())
-	atomic.AddInt64(&o.successiveConnectionFailureCount, 1)
+	atomic.StoreInt64(&o.lastConnectionFailedTimestamp, time.Now().UnixNano())
+	o.successiveConnectionFailureCount.Inc(int64(1))
 	atomic.AddInt64(&o.totalCircuitBreakerBlackOutPeriod, int64(o.getCircuitBreakerBlackoutPeriod()))
 }
 
 //ClearSuccessiveConnectionFailureCount ...
 func (o *Stats) ClearSuccessiveConnectionFailureCount() {
-	atomic.StoreInt64(&o.successiveConnectionFailureCount, 0)
+	o.successiveConnectionFailureCount.Clear()
 }
 
 //GetSuccessiveConnectionCount ...
 func (o *Stats) GetSuccessiveConnectionCount() int64 {
-	return atomic.LoadInt64(&o.successiveConnectionFailureCount)
+	return o.successiveConnectionFailureCount.Count()
 }
 
 //GetResponseTimeAvg gets the average total amount of time to handle a request, in milliseconds.
@@ -272,18 +254,11 @@ func (o *Stats) GetResponseTimeStdDev() float64 {
 
 //GetResponseTimeAvgRecent gets the average total amount of time to handle a request in the recent time-slice, in milliseconds.
 func (o *Stats) GetResponseTimeAvgRecent() float64 {
-	return o.dataDist.GetMean()
+	return o.responseTimeInWindow.Mean()
 }
 
 func (o *Stats) getResponseTimePercentile(percent float64) float64 {
-	length := len(percentiles)
-	var idx int
-	for idx = 0; idx < length; idx++ {
-		if percentiles[idx] == percent {
-			break
-		}
-	}
-	return o.dataDist.GetPercentiles()[idx]
+	return o.responseTimeInWindow.Percentile(percent / float64(100))
 }
 
 //GetResponseTime10thPercentile gets the 10-th percentile in the total amount of time spent handling a request, in milliseconds.
@@ -333,5 +308,5 @@ func (o *Stats) GetResponseTime99point5thPercentile() float64 {
 
 //GetTotalRequestsCount ...
 func (o *Stats) GetTotalRequestsCount() int64 {
-	return atomic.LoadInt64(&o.totalRequests)
+	return o.totalRequests.Count()
 }

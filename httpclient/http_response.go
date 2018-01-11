@@ -1,10 +1,10 @@
 package httpclient
 
 import (
-	"io"
-	"bytes"
 	"net/http"
 	"net/url"
+
+	httputil "github.com/nienie/marathon/utils/http"
 )
 
 //HTTPResponse ...
@@ -25,8 +25,8 @@ func (r *HTTPResponse) GetPayload() ([]byte, error) {
 	if len(r.payload) > 0 {
 		return r.payload, nil
 	}
-	buffer := bytes.NewBuffer(r.payload)
-	_, err := io.Copy(buffer, r.Response.Body)
+	var err error
+	r.payload, err = httputil.DumpResponseBody(r.Response)
 	return r.payload, err
 }
 

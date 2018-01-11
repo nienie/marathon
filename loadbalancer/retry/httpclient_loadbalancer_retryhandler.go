@@ -29,7 +29,14 @@ func (c *HTTPClientLoadBalancerRetryHandler) IsCircuitTrippingException(err erro
 	switch err.(type) {
 	case errors.ClientError:
 		errorType := err.(errors.ClientError).GetErrType()
-		return errorType == errors.ServerThrottled
+		switch errorType {
+		case errors.ServerThrottled:
+			return true
+		case errors.UnknownHostException:
+			return true
+		default:
+			return c.LoadBalancerRetryHandler.IsCircuitTrippingException(err)
+		}
 	default:
 		return c.LoadBalancerRetryHandler.IsCircuitTrippingException(err)
 	}

@@ -24,6 +24,11 @@ var defaultErrorConverter = func (err error) ClientError {
 		return NewClientError(ConnectException, err)
 	}
 
+	re = regexp.MustCompile(`no such host`)
+	if re.MatchString(str) {
+		return NewClientError(UnknownHostException, err)
+	}
+
 	re = regexp.MustCompile(`dial.*i/o timeout`)
 	if re.MatchString(str) {
 		return NewClientError(SocketTimeoutException, err)
@@ -55,9 +60,9 @@ func NewClientError(errorType ErrorType, err error) ClientError {
 //Error ...
 func (o ClientError) Error() string {
 	if o.err != nil {
-		return fmt.Sprintf("code = %d, type = %s, msg= %s", o.errorType, o.errorType.GetName(), o.err.Error())
+		return fmt.Sprintf("code=%d, type=%s, msg=%s", o.errorType, o.errorType.GetName(), o.err.Error())
 	}
-	return fmt.Sprintf("code = %d, type = %s, msg= %s", o.errorType, o.errorType.GetName(), "")
+	return fmt.Sprintf("code=%d, type=%s, msg=%s", o.errorType, o.errorType.GetName(), "")
 }
 
 //GetErrType ...

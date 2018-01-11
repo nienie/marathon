@@ -15,24 +15,42 @@ import (
 )
 
 var (
-	loggerHook AfterHTTHook = func(ctx context.Context, req *http.Request, resp *http.Response, err error) {
-		format := "method=%s||host=%s||uri=%s||args=%s||body=%v||request_header=%v||response=%v||status_code=%d||response_header=%v||err=%v"
-		if err != nil || resp == nil{
+	loggerAfterHook AfterHTTHook = func(ctx context.Context, req *HTTPRequest, resp *HTTPResponse, err error) {
+		var (
+			requestBody  string
+			responseBody string
+			format       = "method=%s||host=%s||uri=%s||args=%s||body=%v||request_header=%v||response=%v||status_code=%d||response_header=%v||err=%v"
+		)
+		if req.GetBodyLength() > 8196 { //large than 8K, perhaps it's a file, so do not log it
+			requestBody = "<large request body>"
+		} else {
+			requestBody = string(req.GetBodyContents())
+		}
+
+		if err != nil || resp == nil {
 			logger.Warnf(ctx, format, req.Method, req.URL.Host, req.URL.Path, req.URL.RawQuery,
-				req.Body, req.Header, nil, 0, nil, err)
+				requestBody, req.Header, nil, 0, nil, err)
 			return
 		}
-		logger.Infof(ctx, format, req.Method, req.URL.Host, req.URL.Path, req.URL.RawQuery, req.Body,
-			req.Header, resp.Body, resp.StatusCode, resp.Header, err)
+
+		payload, _ := resp.GetPayload()
+		if len(payload) > 8196 { //large than 8K, perhaps it's a file, so do not log it
+			responseBody = "<large resposne>"
+		} else {
+			responseBody = string(payload)
+		}
+
+		logger.Infof(ctx, format, req.Method, req.URL.Host, req.URL.Path, req.URL.RawQuery, requestBody,
+			req.Header, responseBody, resp.StatusCode, resp.Header, err)
 		return
 	}
 )
 
 //BeforeHTTPHook ...
-type BeforeHTTPHook func(context.Context, *http.Request)
+type BeforeHTTPHook func(context.Context, *HTTPRequest)
 
 //AfterHTTHook ...
-type AfterHTTHook func(context.Context, *http.Request, *http.Response, error)
+type AfterHTTHook func(context.Context, *HTTPRequest, *HTTPResponse, error)
 
 //LoadBalancerHTTPClient ...
 type LoadBalancerHTTPClient struct {
@@ -70,7 +88,7 @@ func NewHTTPLoadBalancerClient(clientConfig config.ClientConfig, lb loadbalancer
 		HTTPClientName:         clientConfig.GetClientName(),
 		Transport:              trans,
 		BeforeHooks:            make([]BeforeHTTPHook, 0),
-		AfterHooks:             []AfterHTTHook{loggerHook},
+		AfterHooks:             []AfterHTTHook{loggerAfterHook},
 	}
 	//load balancer context correlate with http client
 	loadBalancerClient.Client = httpClient
@@ -82,15 +100,14 @@ func (c *LoadBalancerHTTPClient) Do(ctx context.Context, request *HTTPRequest, r
 	if request == nil || request.Request == nil {
 		return nil, fmt.Errorf("wrong type, request is nil")
 	}
-	req := request.GetRawRequest()
-	c.beforeHTTPHook(ctx, req)
+	c.beforeHTTPHook(ctx, request)
 	resp, err := c.BaseLoadBalancerClient.ExecuteWithLoadBalancer(ctx, request, requestConfig)
 	if err != nil || resp == nil {
-		c.afterHTTPHook(ctx, req, nil, err)
+		c.afterHTTPHook(ctx, request, nil, err)
 		return nil, err
 	}
 	response := resp.(*HTTPResponse)
-	c.afterHTTPHook(ctx, req, response.Response, err)
+	c.afterHTTPHook(ctx, request, response, err)
 	return response.Response, nil
 }
 
@@ -132,16 +149,14 @@ func (c *LoadBalancerHTTPClient) RegisterAfterHook(hooks ...AfterHTTHook) {
 	c.AfterHooks = append(c.AfterHooks, hooks...)
 }
 
-func (c *LoadBalancerHTTPClient) beforeHTTPHook(ctx context.Context, req *http.Request) {
+func (c *LoadBalancerHTTPClient) beforeHTTPHook(ctx context.Context, req *HTTPRequest) {
 	for _, h := range c.BeforeHooks {
 		h(ctx, req)
 	}
 }
 
-func (c *LoadBalancerHTTPClient) afterHTTPHook(ctx context.Context, req *http.Request, resp *http.Response, err error) {
+func (c *LoadBalancerHTTPClient) afterHTTPHook(ctx context.Context, req *HTTPRequest, resp *HTTPResponse, err error) {
 	for _, h := range c.AfterHooks {
 		h(ctx, req, resp, err)
 	}
 }
-
-

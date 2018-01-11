@@ -97,7 +97,6 @@ func (o *Stats) CreateServerStats(s *server.Server) *server.Stats {
 	ss.CircuitTrippedTimeoutFactor = o.CircuitTrippedTimeoutFactor
 	ss.ConnectionFailureThreshold = o.ConnectionFailureThreshold
 	ss.MaxCircuitTrippedTimeout = o.MaxCircuitTrippedTimeout
-	ss.FailureCountSlidingWindowInterval = o.FailureCountSlidingWindowInterval
 	ss.Initialize(s)
 	return ss
 }

@@ -6,11 +6,13 @@ import (
 	"net/url"
 
 	"github.com/nienie/marathon/config"
+	httputil "github.com/nienie/marathon/utils/http"
 )
 
 //HTTPRequest ...
 type HTTPRequest struct {
 	*http.Request
+	body 			[]byte
 	loadBalancerKey interface{}
 }
 
@@ -20,9 +22,16 @@ func NewHTTPRequest(method, urlStr string, body io.Reader, loadBalancerKey inter
 	if err != nil {
 		return nil, err
 	}
+
 	rr := &HTTPRequest{
-		Request:         r,
-		loadBalancerKey:	 loadBalancerKey,
+		Request:         	r,
+		loadBalancerKey:	loadBalancerKey,
+	}
+	if r.Body != nil {
+		rr.body, err = httputil.DumpRequestBody(r)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return rr, nil
 }
@@ -34,6 +43,9 @@ func CreateHTTPRequest(r *http.Request, requestConfig config.ClientConfig) *HTTP
 	}
 	if requestConfig != nil {
 		rr.loadBalancerKey = requestConfig.GetPropertyAsString(config.LoadBalancerKey, config.DefaultLoadBalancerKey)
+	}
+	if r.Body != nil {
+		rr.body, _ = httputil.DumpRequestBody(r)
 	}
 	return rr
 }
@@ -68,4 +80,19 @@ func (r *HTTPRequest) GetRawRequest() *http.Request {
 //ReplaceURI ...
 func (r *HTTPRequest) ReplaceURI(newURI *url.URL) {
 	r.SetURI(newURI)
+}
+
+//GetBodyContents ...
+func (r *HTTPRequest)GetBodyContents() []byte {
+	return r.body
+}
+
+//GetBodyLength ...
+func (r *HTTPRequest)GetBodyLength() int {
+	return len(r.body)
+}
+
+//GetHeaders ...
+func (r *HTTPRequest)GetHeaders() map[string][]string {
+	return r.Header
 }
