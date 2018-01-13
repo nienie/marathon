@@ -54,9 +54,9 @@ func (o *Context) NoteRequestCompletion(stats *server.Stats, response client.Res
 	}
 
 	if err != nil {
+		stats.AddToFailureCount()
 		if errorHandler.IsCircuitTrippingException(err) {
 			stats.IncrementSuccessiveConnectionFailureCount()
-			stats.AddToFailureCount()
 			if stats.IsCircuitBreakerTripped(time.Duration(time.Now().UnixNano())) {
 				if o.LoadBalancer != nil {
 					o.LoadBalancer.MarkServerTempDown(stats.Server)
@@ -85,9 +85,9 @@ func (o *Context) NoteError(stats *server.Stats, request client.Request, err err
 	o.recordStats(stats, responseTime)
 	errorHandler := o.RetryHandler
 	if err != nil {
+		stats.AddToFailureCount()
 		if errorHandler.IsCircuitTrippingException(err) {
 			stats.IncrementSuccessiveConnectionFailureCount()
-			stats.AddToFailureCount()
 			if stats.IsCircuitBreakerTripped(time.Duration(time.Now().UnixNano())) {
 				if o.LoadBalancer != nil {
 					o.LoadBalancer.MarkServerTempDown(stats.Server)

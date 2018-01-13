@@ -29,10 +29,8 @@ const (
 	DefaultMaxCircuitTrippedTimeout = 10 * time.Second
 	//DefaultActiveRequestsCountTimeout ...
 	DefaultActiveRequestsCountTimeout = 30 * time.Second
-	//DefaultFailureCountSlidingWindowSize ...
-	DefaultFailureCountsSlidingWindowSize = 10 //store 10 seconds' data
 	//DefaultRequestCountsSlidingWindowSize ...
-	DefaultRequestCountsSlidingWindowSize = 60 //store 60 seconds' data
+	DefaultRequestCountsSlidingWindowSize = 300 //store 300 seconds' data
 	//DefaultResponseTimeWindowSize ...
 	DefaultResponseTimeWindowSize = 300 //store 300 seconds' data
 )
@@ -47,7 +45,6 @@ type Stats struct {
 	ActiveRequestsCountTimeout  time.Duration
 
 	RequestCountsSlidingWindowSize int
-	FailureCountsSlidingWindowSize int
 	ResponseTimeWindowSize 		   int
 
 
@@ -81,7 +78,6 @@ func NewDefaultServerStats() *Stats {
 		ActiveRequestsCountTimeout:  DefaultActiveRequestsCountTimeout,
 
 		RequestCountsSlidingWindowSize: DefaultRequestCountsSlidingWindowSize,
-		FailureCountsSlidingWindowSize: DefaultFailureCountsSlidingWindowSize,
 		ResponseTimeWindowSize:			DefaultResponseTimeWindowSize,
 
 		responseTimeDist:            	  stats.NewDistribution(),
@@ -97,7 +93,7 @@ func NewDefaultServerStats() *Stats {
 func (o *Stats) Initialize(svr *Server) {
 	o.Server = svr
 
-	o.serverFailureCounts =  stats.NewRollingCounter(o.FailureCountsSlidingWindowSize)
+	o.serverFailureCounts =  stats.NewRollingCounter(o.RequestCountsSlidingWindowSize)
 	o.requestCountInWindow = stats.NewRollingCounter(o.RequestCountsSlidingWindowSize)
 	o.responseTimeInWindow = stats.NewRollingSample(o.ResponseTimeWindowSize)
 }
@@ -182,11 +178,6 @@ func (o *Stats) GetMeasuredRequestsCount() int64 {
 	return o.requestCountInWindow.Count()
 }
 
-//GetMonitoredActiveRequestsCount ...
-func (o *Stats) GetMonitoredActiveRequestsCount() int64 {
-	return o.activeRequestsCount.Count()
-}
-
 func (o *Stats) getCircuitBreakerBlackoutPeriod() time.Duration {
 	failureCount := o.successiveConnectionFailureCount.Count()
 	if failureCount < int64(o.ConnectionFailureThreshold) {
@@ -219,7 +210,7 @@ func (o *Stats) getCircuitBreakerTimeout() time.Duration {
 //IsCircuitBreakerTripped ...
 func (o *Stats) IsCircuitBreakerTripped(currentTime time.Duration) bool {
 	circuitBreakerTimeout := o.getCircuitBreakerTimeout()
-	if circuitBreakerTimeout <= 0 {
+	if circuitBreakerTimeout <= time.Duration(0) {
 		return false
 	}
 	return circuitBreakerTimeout > currentTime
@@ -319,4 +310,16 @@ func (o *Stats) GetResponseTime99point5thPercentile() float64 {
 //GetTotalRequestsCount ...
 func (o *Stats) GetTotalRequestsCount() int64 {
 	return o.totalRequests.Count()
+}
+
+//GetErrorPercentage ...
+func (o *Stats)GetErrorPercentage(size int) float64 {
+	errorCount := o.serverFailureCounts.Sum(size)
+	totalCount := o.requestCountInWindow.Sum(size)
+	return float64(errorCount / totalCount)
+}
+
+//GetRecentErrorPercentage ...
+func (o *Stats)GetRecentErrorPercentage() float64 {
+	return o.GetErrorPercentage(30)
 }

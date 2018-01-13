@@ -11,11 +11,6 @@ import (
 	"github.com/nienie/marathon/utils/timer"
 )
 
-const (
-	//LoadBalancerPrefix ...
-	LoadBalancerPrefix = "LB_"
-)
-
 //BaseLoadBalancer ...
 type BaseLoadBalancer struct {
 	name string

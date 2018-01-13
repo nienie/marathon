@@ -114,7 +114,6 @@ func (c *DefaultClientConfig) LoadDefaultValues() {
 	c.putDefaultStringProperty(LoadBalancerRule, DefaultLoadBalancerRule)
 	c.putDefaultStringProperty(LoadBalancerKey, DefaultLoadBalancerKey)
 	c.putDefaultDurationProperty(RequestTimeout, DefaultRequestTimeout)
-	c.putDefaultDurationProperty(FailureCountSlidingWindowInterval, DefaultFailureCountSlidingWindowInterval)
 	c.putDefaultDurationProperty(ListOfServersPollingInterval, DefaultListOfServersPollingInterval)
 	c.putDefaultBoolProperty(ConcurrencyRateLimitSwitch, DefaultConcurrencyRateLimitSwitch)
 	c.putDefaultBoolProperty(TokenBucketRateLimitSwitch, DefaultTokenBucketRateLimitSwitch)
@@ -124,6 +123,8 @@ func (c *DefaultClientConfig) LoadDefaultValues() {
 	c.putDefaultBoolProperty(LeakyBucketRateLimitSwitch, DefaultLeakyBucketRateLimitSwitch)
 	c.putDefaultIntegerProperty(LeakyBucketCapacity, DefaultLeakyBucketCapacity)
 	c.putDefaultDurationProperty(LeakyBucketInterval, DefaultLeakyBucketInterval)
+	c.putDefaultIntegerProperty(RequestCountsSlidingWindowSize, DefaultRequestCountsSlidingWindowSize)
+	c.putDefaultIntegerProperty(ResponseTimeWindowSize, DefaultResponseTimeWindowSize)
 }
 
 //LoadProperties ...

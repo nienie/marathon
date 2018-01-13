@@ -8,29 +8,23 @@ import (
 	"github.com/nienie/marathon/server"
 )
 
-const (
-	//DefaultServerStatsCacheExpireTime ...
-	DefaultServerStatsCacheExpireTime = 30 * time.Minute
-	//LoadBalancerStatsPrefix ...
-	LoadBalancerStatsPrefix = "LBStats_"
-)
-
 //Stats Class that acts as a repository of operational charateristics and statistics
 //of every Node/Server in the LaodBalancer. This information can be used to just observe and understand the runtime
 //behavior of the loadbalancer or more importantly for the basis that determines the loadbalacing strategy
 type Stats struct {
-	Name                        string
-	ConnectionFailureThreshold  int
-	CircuitTrippedTimeoutFactor int
-	MaxCircuitTrippedTimeout    time.Duration
-	ServerStatsCacheExpireTime  time.Duration
+	Name                           string
+	ConnectionFailureThreshold     int
+	CircuitTrippedTimeoutFactor    int
+	MaxCircuitTrippedTimeout       time.Duration
+	ResponseTimeWindowSize         int
+	RequestCountsSlidingWindowSize int
 
-	serverStatsMap              map[*server.Server]*server.Stats
-	serverStatsLock             sync.RWMutex
-	clusterStatsMap             map[string]*ClusterStats
-	clusterStatsLock            sync.RWMutex
-	upServerClusterMap          map[string][]*server.Server
-	serverClusterLock           sync.RWMutex
+	serverStatsMap                 map[*server.Server]*server.Stats
+	serverStatsLock                sync.RWMutex
+	clusterStatsMap                map[string]*ClusterStats
+	clusterStatsLock               sync.RWMutex
+	upServerClusterMap             map[string][]*server.Server
+	serverClusterLock              sync.RWMutex
 }
 
 //NewLoadBalancerStats ...
@@ -43,6 +37,10 @@ func NewLoadBalancerStats(clientConfig config.ClientConfig) *Stats {
 			config.DefaultCircuitTrippedTimeoutFactor),
 		MaxCircuitTrippedTimeout: clientConfig.GetPropertyAsDuration(config.CircuitTripMaxTimeout,
 			config.DefaultCircuitTripMaxTimeout),
+		ResponseTimeWindowSize:  clientConfig.GetPropertyAsInteger(config.ResponseTimeWindowSize,
+			config.DefaultResponseTimeWindowSize),
+		RequestCountsSlidingWindowSize: clientConfig.GetPropertyAsInteger(config.RequestCountsSlidingWindowSize,
+			config.DefaultRequestCountsSlidingWindowSize),
 		clusterStatsMap:            make(map[string]*ClusterStats),
 		clusterStatsLock:           sync.RWMutex{},
 		upServerClusterMap:         make(map[string][]*server.Server),
@@ -59,6 +57,8 @@ func (o *Stats) CreateServerStats(svr *server.Server) *server.Stats {
 	ss.CircuitTrippedTimeoutFactor = o.CircuitTrippedTimeoutFactor
 	ss.ConnectionFailureThreshold = o.ConnectionFailureThreshold
 	ss.MaxCircuitTrippedTimeout = o.MaxCircuitTrippedTimeout
+	ss.ResponseTimeWindowSize = o.ResponseTimeWindowSize
+	ss.RequestCountsSlidingWindowSize = o.RequestCountsSlidingWindowSize
 	ss.Initialize(svr)
 	return ss
 }
