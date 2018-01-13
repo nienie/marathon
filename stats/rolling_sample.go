@@ -49,12 +49,21 @@ func (s *RollingSample)removeExpiredBuckets(currentTime int64) {
 
 func (s *RollingSample)getHistoryData() []int64 {
     values := make([]int64, 0, 1000)
+    currentTime := time.Now().Unix()
     s.RLock()
-    for _, data := range s.Buckets {
+    for timestamp, data := range s.Buckets {
+        if currentTime - timestamp > int64(s.WindowSize) {
+            continue
+        }
         values = append(values, data...)
     }
     s.RUnlock()
     return values
+}
+
+//Sum ...
+func (s *RollingSample)Sum() int64 {
+    return metrics.SampleSum(s.getHistoryData())
 }
 
 //Max ...

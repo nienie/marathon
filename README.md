@@ -122,7 +122,7 @@ marathon内置限流模块，提供MaxConcurrency/MaxRequest(最大并发/最大
     //Step 2:
     //设置健康检查的方法。默认提供URLPing的方法
     //也可以实现ping.Ping接口的方法，实现自己的健康检查方法。
-    pingAction := ping.NewURLPing(false, "/health/check", "SUCCESS")
+    pingAction := ping.NewURLPing("/health/check", "SUCCESS")
     
     //Step 3:
     //设置健康检查的执行策略策略
@@ -277,7 +277,7 @@ TokenBucket(令牌桶)和LeakyBucket(漏桶)三种限流算法。使用示例如
     
     //Step 2:
     //将自己定义的Collector注册进marathon。
-    metric.RegisterCollector(&MyCollector{})
+    metric.RegisterCollectors(&MyCollector{})
 ```    
     
 -----------------

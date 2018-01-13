@@ -1,13 +1,11 @@
 package loadbalancer
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
 	"github.com/nienie/marathon/config"
 	"github.com/nienie/marathon/server"
-	"github.com/nienie/marathon/utils/cache"
 )
 
 const (
@@ -17,55 +15,22 @@ const (
 	LoadBalancerStatsPrefix = "LBStats_"
 )
 
-var (
-	errWrongType = fmt.Errorf("wrong type")
-)
-
 //Stats Class that acts as a repository of operational charateristics and statistics
 //of every Node/Server in the LaodBalancer. This information can be used to just observe and understand the runtime
 //behavior of the loadbalancer or more importantly for the basis that determines the loadbalacing strategy
 type Stats struct {
-	Name                              string
-	ConnectionFailureThreshold        int
-	CircuitTrippedTimeoutFactor       int
-	MaxCircuitTrippedTimeout          time.Duration
-	ServerStatsCacheExpireTime        time.Duration
-	FailureCountSlidingWindowInterval time.Duration
+	Name                        string
+	ConnectionFailureThreshold  int
+	CircuitTrippedTimeoutFactor int
+	MaxCircuitTrippedTimeout    time.Duration
+	ServerStatsCacheExpireTime  time.Duration
 
-	serverStatsCache   *cache.TimedCache
-	clusterStatsMap    map[string]*ClusterStats
-	clusterStatsLock   sync.RWMutex
-	upServerClusterMap map[string][]*server.Server
-	serverClusterLock  sync.RWMutex
-}
-
-type serverStatsCacheCallback struct {
-	loadBalancerStats *Stats
-}
-
-func newServerStatsCacheCallback(stats *Stats) cache.Callback {
-	return &serverStatsCacheCallback{
-		loadBalancerStats: stats,
-	}
-}
-
-//OnLoad ...
-func (o *serverStatsCacheCallback) OnLoad(key interface{}) (interface{}, error) {
-	server, ok := key.(*server.Server)
-	if !ok {
-		return nil, errWrongType
-	}
-	return o.loadBalancerStats.CreateServerStats(server), nil
-}
-
-//OnRemove ...
-func (o *serverStatsCacheCallback) OnRemove(key interface{}, val interface{}) error {
-	serverStats, ok := val.(*server.Stats)
-	if !ok {
-		return errWrongType
-	}
-	serverStats.Close()
-	return nil
+	serverStatsMap              map[*server.Server]*server.Stats
+	serverStatsLock             sync.RWMutex
+	clusterStatsMap             map[string]*ClusterStats
+	clusterStatsLock            sync.RWMutex
+	upServerClusterMap          map[string][]*server.Server
+	serverClusterLock           sync.RWMutex
 }
 
 //NewLoadBalancerStats ...
@@ -78,26 +43,23 @@ func NewLoadBalancerStats(clientConfig config.ClientConfig) *Stats {
 			config.DefaultCircuitTrippedTimeoutFactor),
 		MaxCircuitTrippedTimeout: clientConfig.GetPropertyAsDuration(config.CircuitTripMaxTimeout,
 			config.DefaultCircuitTripMaxTimeout),
-		FailureCountSlidingWindowInterval: clientConfig.GetPropertyAsDuration(config.FailureCountSlidingWindowInterval,
-			config.DefaultFailureCountSlidingWindowInterval),
-		ServerStatsCacheExpireTime: DefaultServerStatsCacheExpireTime,
 		clusterStatsMap:            make(map[string]*ClusterStats),
 		clusterStatsLock:           sync.RWMutex{},
 		upServerClusterMap:         make(map[string][]*server.Server),
 		serverClusterLock:          sync.RWMutex{},
+		serverStatsMap: 			make(map[*server.Server]*server.Stats),
+		serverStatsLock:			sync.RWMutex{},
 	}
-	callback := newServerStatsCacheCallback(loadBalancerStats)
-	loadBalancerStats.serverStatsCache = cache.NewTimedCache(loadBalancerStats.ServerStatsCacheExpireTime, callback)
 	return loadBalancerStats
 }
 
 //CreateServerStats ...
-func (o *Stats) CreateServerStats(s *server.Server) *server.Stats {
+func (o *Stats) CreateServerStats(svr *server.Server) *server.Stats {
 	ss := server.NewDefaultServerStats()
 	ss.CircuitTrippedTimeoutFactor = o.CircuitTrippedTimeoutFactor
 	ss.ConnectionFailureThreshold = o.ConnectionFailureThreshold
 	ss.MaxCircuitTrippedTimeout = o.MaxCircuitTrippedTimeout
-	ss.Initialize(s)
+	ss.Initialize(svr)
 	return ss
 }
 
@@ -119,19 +81,14 @@ func (o *Stats) GetSingleServerStats(svr *server.Server) *server.Stats {
 	if svr == nil {
 		return nil
 	}
-	ss, err := o.serverStatsCache.GetAndSetWhenNotExisted(svr)
-	if err != nil || ss == nil {
-		serverStats := o.CreateServerStats(svr)
-		o.serverStatsCache.Set(svr, serverStats, time.Duration(0))
-		return serverStats
-	}
-	serverStats, ok := ss.(*server.Stats)
+	o.serverStatsLock.Lock()
+	defer o.serverStatsLock.Unlock()
+	ss, ok := o.serverStatsMap[svr]
 	if !ok {
-		serverStats = o.CreateServerStats(svr)
-		o.serverStatsCache.Set(svr, serverStats, time.Duration(0))
-		return serverStats
+		ss = o.CreateServerStats(svr)
+		o.serverStatsMap[svr] = ss
 	}
-	return serverStats
+	return ss
 }
 
 //NoteResponseTime ...
@@ -178,18 +135,11 @@ func (o *Stats) IncrementNumRequests(server *server.Server) {
 
 //GetAllServerStats ...
 func (o *Stats) GetAllServerStats() map[*server.Server]*server.Stats {
-	m := o.serverStatsCache.ToMap()
+	o.serverStatsLock.RLock()
+	defer o.serverStatsLock.RUnlock()
 	serverStatsMap := make(map[*server.Server]*server.Stats)
-	for s, ss := range m {
-		svr, ok := s.(*server.Server)
-		if !ok {
-			continue
-		}
-		svrStats, ok := ss.(*server.Stats)
-		if !ok {
-			continue
-		}
-		serverStatsMap[svr] = svrStats
+	for s, ss := range o.serverStatsMap {
+		serverStatsMap[s] = ss
 	}
 	return serverStatsMap
 }
@@ -301,12 +251,12 @@ func (o *Stats) GetAvailableClusters() []string {
 
 func (o *Stats) getClusterStats(cluster string) *ClusterStats {
 	o.clusterStatsLock.Lock()
+	defer o.clusterStatsLock.Unlock()
 	clusterStats := o.clusterStatsMap[cluster]
 	if clusterStats == nil {
 		clusterStats := NewClusterStats(cluster, o)
 		o.clusterStatsMap[cluster] = clusterStats
 	}
-	o.clusterStatsLock.Unlock()
 	return clusterStats
 }
 

@@ -15,14 +15,16 @@ func init() {
 	metricCollectors = make([]Collector, 0)
 }
 
-//RegisterCollector ...
-func RegisterCollector(c Collector) {
-	metricCollectors = append(metricCollectors, c)
+//RegisterCollectors ...
+func RegisterCollectors(cs ...Collector) {
+	metricCollectors = append(metricCollectors, cs...)
 }
 
 //RPC ...
 func RPC(ctx context.Context, request client.Request, response client.Response, err error, costTime time.Duration) {
 	for _, c := range metricCollectors {
-		c.RPC(ctx, request, response, err, costTime)
+		if c != nil {
+			c.RPC(ctx, request, response, err, costTime)
+		}
 	}
 }

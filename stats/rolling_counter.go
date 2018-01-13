@@ -71,7 +71,7 @@ func (c *RollingCounter)Dec(i int64) {
 
 //Sum ...
 func (c *RollingCounter)Sum(size int) int64 {
-    if size > c.WindowSize {
+    if size > c.WindowSize || size < 0 {
         size = c.WindowSize
     }
     var totalCount = int64(0)
@@ -96,13 +96,7 @@ func (c *RollingCounter)Clear() {
 
 //Count ...
 func (c *RollingCounter)Count() int64 {
-    var totalCount = int64(0)
-    c.RLock()
-    defer c.RUnlock()
-    for _, counter := range c.Buckets {
-        totalCount += counter.Count()
-    }
-    return totalCount
+    return c.Sum(c.WindowSize)
 }
 
 //Snapshot ...

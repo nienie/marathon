@@ -30,11 +30,11 @@ const (
 	//DefaultActiveRequestsCountTimeout ...
 	DefaultActiveRequestsCountTimeout = 30 * time.Second
 	//DefaultFailureCountSlidingWindowSize ...
-	DefaultFailureCountSlidingWindowSize = 10 //store 10 seconds' data
+	DefaultFailureCountsSlidingWindowSize = 10 //store 10 seconds' data
 	//DefaultRequestCountsSlidingWindowSize ...
 	DefaultRequestCountsSlidingWindowSize = 60 //store 60 seconds' data
 	//DefaultResponseTimeWindowSize ...
-	DefaultResponseTimeWindowSize = 60 //store 60 seconds' data
+	DefaultResponseTimeWindowSize = 300 //store 300 seconds' data
 )
 
 //Stats ...
@@ -45,6 +45,11 @@ type Stats struct {
 	CircuitTrippedTimeoutFactor int
 	MaxCircuitTrippedTimeout    time.Duration
 	ActiveRequestsCountTimeout  time.Duration
+
+	RequestCountsSlidingWindowSize int
+	FailureCountsSlidingWindowSize int
+	ResponseTimeWindowSize 		   int
+
 
 	//for stats
 	totalRequests                     metrics.Counter
@@ -74,22 +79,27 @@ func NewDefaultServerStats() *Stats {
 		CircuitTrippedTimeoutFactor: DefaultCircuitTrippedTimeoutFactor,
 		MaxCircuitTrippedTimeout:    DefaultMaxCircuitTrippedTimeout,
 		ActiveRequestsCountTimeout:  DefaultActiveRequestsCountTimeout,
-		responseTimeDist:            stats.NewDistribution(),
+
+		RequestCountsSlidingWindowSize: DefaultRequestCountsSlidingWindowSize,
+		FailureCountsSlidingWindowSize: DefaultFailureCountsSlidingWindowSize,
+		ResponseTimeWindowSize:			DefaultResponseTimeWindowSize,
+
+		responseTimeDist:            	  stats.NewDistribution(),
 
 		totalRequests:                    &metrics.StandardCounter{},
 		activeRequestsCount:              &metrics.StandardCounter{},
 		openConnectionsCount:             &metrics.StandardCounter{},
 		successiveConnectionFailureCount: &metrics.StandardCounter{},
-
-		serverFailureCounts:  stats.NewRollingCounter(DefaultFailureCountSlidingWindowSize),
-		requestCountInWindow: stats.NewRollingCounter(DefaultRequestCountsSlidingWindowSize),
-		responseTimeInWindow: stats.NewRollingSample(DefaultResponseTimeWindowSize),
 	}
 }
 
 //Initialize ...
 func (o *Stats) Initialize(svr *Server) {
 	o.Server = svr
+
+	o.serverFailureCounts =  stats.NewRollingCounter(o.FailureCountsSlidingWindowSize)
+	o.requestCountInWindow = stats.NewRollingCounter(o.RequestCountsSlidingWindowSize)
+	o.responseTimeInWindow = stats.NewRollingSample(o.ResponseTimeWindowSize)
 }
 
 //Close ...

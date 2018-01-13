@@ -10,15 +10,13 @@ import (
 //URLPing Ping implementation if you want to do a "health check" kind of ping.
 //This will be a real ping. As in a real http/s call is made to this url.
 type URLPing struct {
-	IsSecure         bool
 	PingAppendString string
 	ExpectedContent  string
 }
 
 //NewURLPing ...
-func NewURLPing(isSecure bool, pingAppendString, expectedContent string) Ping {
+func NewURLPing(pingAppendString, expectedContent string) Ping {
 	return &URLPing{
-		IsSecure:         isSecure,
 		PingAppendString: pingAppendString,
 		ExpectedContent:  expectedContent,
 	}
@@ -27,11 +25,7 @@ func NewURLPing(isSecure bool, pingAppendString, expectedContent string) Ping {
 //IsAlive ...
 func (p *URLPing) IsAlive(svr *server.Server) bool {
 	urlStr := ""
-	if p.IsSecure {
-		urlStr = urlStr + "https://"
-	} else {
-		urlStr = urlStr + "http://"
-	}
+	urlStr = urlStr + svr.GetScheme()
 	urlStr = urlStr + svr.GetHostPort()
 	urlStr = urlStr + p.PingAppendString
 	resp, err := http.Get(urlStr)
