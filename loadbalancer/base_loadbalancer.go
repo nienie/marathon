@@ -151,16 +151,9 @@ func (o *BaseLoadBalancer) runPingTask() {
 		}
 	}
 
-	//no servers are alive, make them all be selected.
-	if len(newUpList) == 0 {
-		o.upServerLock.Lock()
-		o.upServersList = allServers
-		o.upServerLock.Unlock()
-	} else {
-		o.upServerLock.Lock()
-		o.upServersList = newUpList
-		o.upServerLock.Unlock()
-	}
+	o.upServerLock.Lock()
+	o.upServersList = newUpList
+	o.upServerLock.Unlock()
 
 	o.notifyServerStatusChangeListener(changeServers)
 }
