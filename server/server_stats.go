@@ -312,14 +312,14 @@ func (o *Stats) GetTotalRequestsCount() int64 {
 	return o.totalRequests.Count()
 }
 
-//GetErrorPercentage ...
-func (o *Stats)GetErrorPercentage(size int) float64 {
+//GetErrorRate ...
+func (o *Stats)GetErrorRate(size int) float64 {
 	errorCount := o.serverFailureCounts.Sum(size)
 	totalCount := o.requestCountInWindow.Sum(size)
 	return float64(errorCount / totalCount)
 }
 
-//GetRecentErrorPercentage ...
-func (o *Stats)GetRecentErrorPercentage() float64 {
-	return o.GetErrorPercentage(30)
+//GetRecentErrorRate ...
+func (o *Stats)GetRecentErrorRate() float64 {
+	return o.GetErrorRate(30)
 }
