@@ -323,3 +323,8 @@ func (o *Stats)GetErrorRate(size int) float64 {
 func (o *Stats)GetRecentErrorRate() float64 {
 	return o.GetErrorRate(30)
 }
+
+//GetAvgResponseTimePerSecond ...
+func (o *Stats)GetAvgResponseTimePerSecond() []float64 {
+	return o.responseTimeInWindow.AvgPerSecond()
+}

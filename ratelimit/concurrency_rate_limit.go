@@ -2,6 +2,7 @@ package ratelimit
 
 import (
 	"net/url"
+	"time"
 
 	"github.com/nienie/marathon/config"
 	"github.com/nienie/marathon/server"
@@ -26,7 +27,7 @@ func (l *ConcurrencyRateLimit) Allow(url *url.URL, serverStats *server.Stats, re
 	}
 
 	maxConns := int64(requestConfig.GetPropertyAsInteger(config.MaxConnectionsPerHost, config.DefaultMaxConnectionsPerHost))
-	curConns := serverStats.GetOpenConnectionsCount()
+	curConns := serverStats.GetActiveRequestsCount(time.Duration(time.Now().UnixNano()))
 	if curConns > maxConns {
 		return false
 	}

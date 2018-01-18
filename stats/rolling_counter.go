@@ -9,7 +9,7 @@ import (
 
 //RollingCounter ...
 type RollingCounter struct {
-    sync.RWMutex
+    *sync.RWMutex
     Buckets         map[int64]metrics.Counter //key is a unix timestamp(unit: seconds)
     WindowSize      int                       //save for how long time...(unit: seconds)
 }
@@ -17,6 +17,7 @@ type RollingCounter struct {
 //NewRollingCounter ...
 func NewRollingCounter(windowSize int) *RollingCounter {
     return &RollingCounter{
+        RWMutex:        &sync.RWMutex{},
         Buckets:        make(map[int64]metrics.Counter),
         WindowSize:     windowSize,
     }

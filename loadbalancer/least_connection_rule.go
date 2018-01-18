@@ -2,6 +2,7 @@ package loadbalancer
 
 import (
 	"math"
+	"time"
 
 	"github.com/nienie/marathon/server"
 )
@@ -42,12 +43,13 @@ func (o *LeastConnectionRule) ChooseFromLoadBalancer(lb LoadBalancer, key interf
 		selectedServer   *server.Server
 		leastConnections int64 = math.MaxInt64
 	)
+	currentTime := time.Duration(time.Now().UnixNano())
 	for _, svr := range reachableServers {
 		if svr.IsTempDown() {
 			continue
 		}
 		serverStats := lbStats.GetSingleServerStats(svr)
-		cnt := serverStats.GetOpenConnectionsCount()
+		cnt := serverStats.GetActiveRequestsCount(currentTime)
 		if cnt < leastConnections {
 			leastConnections = cnt
 			selectedServer = svr

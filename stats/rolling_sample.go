@@ -10,7 +10,7 @@ import (
 
 //RollingSample ...
 type RollingSample struct {
-    sync.RWMutex
+    *sync.RWMutex
     Buckets     map[int64][]int64   //key is a unix timestamp(unit: seconds)
     WindowSize  int                 //save for how long time...(unit: seconds)
 }
@@ -18,6 +18,7 @@ type RollingSample struct {
 //NewRollingSample ...
 func NewRollingSample(windowSize int) *RollingSample {
     return &RollingSample{
+        RWMutex:        &sync.RWMutex{},
         Buckets:        make(map[int64][]int64),
         WindowSize:     windowSize,
     }
@@ -99,4 +100,19 @@ func (s *RollingSample)Percentile(p float64) float64 {
 //Percentiles ...
 func (s *RollingSample)Percentiles(ps []float64) []float64 {
     return metrics.SamplePercentiles(s.getHistoryData(), ps)
+}
+
+//AvgPerSecond ...
+func (s *RollingSample)AvgPerSecond() []float64 {
+    currentTime := time.Now().Unix()
+    ret := make([]float64, 0, s.WindowSize)
+    s.RLock()
+    for timestamp, data := range s.Buckets {
+        if currentTime - timestamp > int64(s.WindowSize) {
+            continue
+        }
+        ret = append(ret, metrics.SampleMean(data))
+    }
+    s.RUnlock()
+    return ret
 }
