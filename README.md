@@ -249,6 +249,8 @@ marathon内置限流模块，提供MaxConcurrency/MaxRequest(最大并发/最大
     clientConfig.Set("CircuitTripMaxTimeout", 60 * time.Second)
 ```
 
+-----------------
+
 6. 重试。
 
     设置重试的示例代码：
