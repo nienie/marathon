@@ -48,24 +48,29 @@ func (r *WeightedResponseTimeRule) ChooseFromLoadBalancer(lb LoadBalancer, key i
     for i, svr := range reachableServers {
         wg.Add(1)
         serverStats := lb.GetLoadBalancerStats().GetSingleServerStats(svr)
-        go func (serverStats *server.Stats, index int) {
+        go func (serverStats *server.Stats, index int, wg *sync.WaitGroup) {
             defer wg.Done()
-            avgRespTimePerSeconds := serverStats.GetAvgResponseTimePerSecond()
-            l := len(avgRespTimePerSeconds)
+            avgRespTimePerSecond := serverStats.GetAvgResponseTimePerSecond()
+            l := len(avgRespTimePerSecond)
             if l == 0 {
-                serversResponseTime[index] = 0
+                serversResponseTime[index] = float64(0)
                 return
             }
 
             if l == 1 {
-                serversResponseTime[index] = avgRespTimePerSeconds[0]
+                serversResponseTime[index] = avgRespTimePerSecond[0]
                 return
             }
+
             delta := float64(1 / (l - 1))
-            for j, avgRespTimePerSecond := range avgRespTimePerSeconds {
-                serversResponseTime[index] = (0.5 + float64(j) * delta) * avgRespTimePerSecond
+            weights := float64(0.0)
+            for j, avgRespTimePerSecond := range avgRespTimePerSecond {
+                weight := 0.5 + float64(j) * delta
+                serversResponseTime[index] = weight * avgRespTimePerSecond
+                weights += weight
             }
-        }(serverStats, i)
+            serversResponseTime[index] = serversResponseTime[index] / weights
+        }(serverStats, i, wg)
     }
     wg.Wait()
 
