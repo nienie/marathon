@@ -185,7 +185,7 @@ marathon内置限流模块，提供MaxConcurrency/MaxRequest(最大并发/最大
     
     //Step 3:
     //负载均衡的算法采用随机选择的算法。
-    rule := loadbalancer.NewRandonRule()
+    rule := loadbalancer.NewRandomRule()
         
     //Step 4:
     //创建动态servers列表的loadbalancer
@@ -276,23 +276,23 @@ TokenBucket(令牌桶)和LeakyBucket(漏桶)三种限流算法。使用示例如
     //例如对/ratelimit接口，我们的限流配置如下
     requestConfig := config.NewDefaultClientConfig("ratelimit", nil)
     //打开最大并发数限流控制
-    requestConfig.Set("ratelimit.ConcurrencyRateLimitSwitch", true)
+    requestConfig.Set("ConcurrencyRateLimitSwitch", true)
     //设置最大并发数50
-    requestConfig.Set("ratelimit.MaxConnectionsPerHost", 50)
+    requestConfig.Set("MaxConnectionsPerHost", 50)
     //打开令牌桶限流控制
-    requestConfig.Set("ratelimit.TokenBucketRateLimitSwitch", true)
+    requestConfig.Set("TokenBucketRateLimitSwitch", true)
     //设置令牌桶的最大容量
-    requestConfig.Set("ratelimit.TokenBucketCapacity", 50)
+    requestConfig.Set("TokenBucketCapacity", 50)
     //设置令牌放置的周期
-    requestConfig.Set("ratelimit.TokenBucketFillInterval", 100 * time.Millisecond)
+    requestConfig.Set("TokenBucketFillInterval", 100 * time.Millisecond)
     //设置令牌放置的数量
-    requestConfig.Set("ratelimit.TokenBucketFillCount", 2)
+    requestConfig.Set("TokenBucketFillCount", 2)
     //打开漏桶限流控制
-    requestConfig.Set("ratelimit.LeakyBucketRateLimitSwitch", true)
+    requestConfig.Set("LeakyBucketRateLimitSwitch", true)
     //设置漏桶的最大容量
-    requestConfig.Set("ratelimit.LeakyBucketCapacity", 50)
+    requestConfig.Set("LeakyBucketCapacity", 50)
     //设置漏桶的漏桶周期
-    requestConfig.Set("ratelimit.LeakyBucketInterval", 50 * time.Millisecond)
+    requestConfig.Set("LeakyBucketInterval", 50 * time.Millisecond)
 ```
 
 -----------------
@@ -343,9 +343,9 @@ TokenBucket(令牌桶)和LeakyBucket(漏桶)三种限流算法。使用示例如
     //如果需要对request进行差异化的控制，构建request级别的Config.
     requestConfig := config.NewDefaultConfig("example", nil)
     //出错后，在第一次选取的机器上重试一次
-    requestConfig.Set("example.MaxAutoRetries", 1)
+    requestConfig.Set("MaxAutoRetries", 1)
     //如果在出错，重新选取机器后再请求一次
-    requestConfig.Set("example.MaxAutoRetriesNextServer", 1)
+    requestConfig.Set("MaxAutoRetriesNextServer", 1)
     
     //Step 4:
     //请求
