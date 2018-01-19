@@ -327,7 +327,7 @@ TokenBucket(令牌桶)和LeakyBucket(漏桶)三种限流算法。使用示例如
     //定义带loadbalancer 功能的httpClient
     httpClient := httpclient.NewHTTPLoadBalancerClient(clientConfig, lb)
     //自定义给所有的请求统一加上某些Header
-    httpClient.RegisterBeforeHook(func(ctx context.Context, req *http.Request){
+    httpClient.RegisterBeforeHook(func(ctx context.Context, req *HTTPRequest){
         req.Header.Set("Marathon-Extension", "marathon")
     })
     
