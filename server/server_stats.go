@@ -45,8 +45,7 @@ type Stats struct {
 	ActiveRequestsCountTimeout  time.Duration
 
 	RequestCountsSlidingWindowSize int
-	ResponseTimeWindowSize 		   int
-
+	ResponseTimeWindowSize         int
 
 	//for stats
 	totalRequests                     metrics.Counter
@@ -78,9 +77,9 @@ func NewDefaultServerStats() *Stats {
 		ActiveRequestsCountTimeout:  DefaultActiveRequestsCountTimeout,
 
 		RequestCountsSlidingWindowSize: DefaultRequestCountsSlidingWindowSize,
-		ResponseTimeWindowSize:			DefaultResponseTimeWindowSize,
+		ResponseTimeWindowSize:         DefaultResponseTimeWindowSize,
 
-		responseTimeDist:            	  stats.NewDistribution(),
+		responseTimeDist: stats.NewDistribution(),
 
 		totalRequests:                    &metrics.StandardCounter{},
 		activeRequestsCount:              &metrics.StandardCounter{},
@@ -93,7 +92,7 @@ func NewDefaultServerStats() *Stats {
 func (o *Stats) Initialize(svr *Server) {
 	o.Server = svr
 
-	o.serverFailureCounts =  stats.NewRollingCounter(o.RequestCountsSlidingWindowSize)
+	o.serverFailureCounts = stats.NewRollingCounter(o.RequestCountsSlidingWindowSize)
 	o.requestCountInWindow = stats.NewRollingCounter(o.RequestCountsSlidingWindowSize)
 	o.responseTimeInWindow = stats.NewRollingSample(o.ResponseTimeWindowSize)
 }
@@ -313,18 +312,18 @@ func (o *Stats) GetTotalRequestsCount() int64 {
 }
 
 //GetErrorRate ...
-func (o *Stats)GetErrorRate(size int) float64 {
+func (o *Stats) GetErrorRate(size int) float64 {
 	errorCount := o.serverFailureCounts.Sum(size)
 	totalCount := o.requestCountInWindow.Sum(size)
 	return float64(errorCount / totalCount)
 }
 
 //GetRecentErrorRate ...
-func (o *Stats)GetRecentErrorRate() float64 {
+func (o *Stats) GetRecentErrorRate() float64 {
 	return o.GetErrorRate(30)
 }
 
 //GetAvgResponseTimePerSecond ...
-func (o *Stats)GetAvgResponseTimePerSecond() []float64 {
+func (o *Stats) GetAvgResponseTimePerSecond() []float64 {
 	return o.responseTimeInWindow.AvgPerSecond()
 }

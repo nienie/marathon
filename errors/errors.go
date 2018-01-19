@@ -10,10 +10,9 @@ var (
 )
 
 //ErrorConverter ...
-type ErrorConverter func(error)ClientError
+type ErrorConverter func(error) ClientError
 
-
-var defaultErrorConverter = func (err error) ClientError {
+var defaultErrorConverter = func(err error) ClientError {
 	if err == nil {
 		return NewClientError(OK, nil)
 	}

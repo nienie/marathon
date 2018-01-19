@@ -179,7 +179,7 @@ func (o *Context) GetServerFromLoadBalancer(original *url.URL, loadBalancerKey i
 }
 
 //ReconstructURIWithServer ...
-func (o *Context) ReconstructURIWithServer(svr *server.Server, original *url.URL) (*url.URL) {
+func (o *Context) ReconstructURIWithServer(svr *server.Server, original *url.URL) *url.URL {
 	if svr == nil || original == nil {
 		return original
 	}

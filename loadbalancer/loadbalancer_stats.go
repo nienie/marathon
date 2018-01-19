@@ -19,12 +19,12 @@ type Stats struct {
 	ResponseTimeWindowSize         int
 	RequestCountsSlidingWindowSize int
 
-	serverStatsMap                 map[*server.Server]*server.Stats
-	serverStatsLock                sync.RWMutex
-	clusterStatsMap                map[string]*ClusterStats
-	clusterStatsLock               sync.RWMutex
-	upServerClusterMap             map[string][]*server.Server
-	serverClusterLock              sync.RWMutex
+	serverStatsMap     map[*server.Server]*server.Stats
+	serverStatsLock    sync.RWMutex
+	clusterStatsMap    map[string]*ClusterStats
+	clusterStatsLock   sync.RWMutex
+	upServerClusterMap map[string][]*server.Server
+	serverClusterLock  sync.RWMutex
 }
 
 //NewLoadBalancerStats ...
@@ -37,16 +37,16 @@ func NewLoadBalancerStats(clientConfig config.ClientConfig) *Stats {
 			config.DefaultCircuitTrippedTimeoutFactor),
 		MaxCircuitTrippedTimeout: clientConfig.GetPropertyAsDuration(config.CircuitTripMaxTimeout,
 			config.DefaultCircuitTripMaxTimeout),
-		ResponseTimeWindowSize:  clientConfig.GetPropertyAsInteger(config.ResponseTimeWindowSize,
+		ResponseTimeWindowSize: clientConfig.GetPropertyAsInteger(config.ResponseTimeWindowSize,
 			config.DefaultResponseTimeWindowSize),
 		RequestCountsSlidingWindowSize: clientConfig.GetPropertyAsInteger(config.RequestCountsSlidingWindowSize,
 			config.DefaultRequestCountsSlidingWindowSize),
-		clusterStatsMap:            make(map[string]*ClusterStats),
-		clusterStatsLock:           sync.RWMutex{},
-		upServerClusterMap:         make(map[string][]*server.Server),
-		serverClusterLock:          sync.RWMutex{},
-		serverStatsMap: 			make(map[*server.Server]*server.Stats),
-		serverStatsLock:			sync.RWMutex{},
+		clusterStatsMap:    make(map[string]*ClusterStats),
+		clusterStatsLock:   sync.RWMutex{},
+		upServerClusterMap: make(map[string][]*server.Server),
+		serverClusterLock:  sync.RWMutex{},
+		serverStatsMap:     make(map[*server.Server]*server.Stats),
+		serverStatsLock:    sync.RWMutex{},
 	}
 	return loadBalancerStats
 }

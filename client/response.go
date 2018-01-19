@@ -18,5 +18,4 @@ type Response interface {
 	GetHeaders() map[string][]string
 	//GetStatusCode ...
 	GetStatusCode() int
-
 }

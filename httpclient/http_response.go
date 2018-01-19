@@ -51,6 +51,6 @@ func (r *HTTPResponse) GetRequestedURI() *url.URL {
 }
 
 //GetStatusCode ...
-func (r *HTTPResponse)GetStatusCode() int {
+func (r *HTTPResponse) GetStatusCode() int {
 	return r.Response.StatusCode
 }

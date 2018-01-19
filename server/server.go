@@ -13,25 +13,25 @@ const (
 
 //Server represents a typical server, use Host:Port identifier
 type Server struct {
-	Host 		 string		`json:"host"`
-	Port 		 int		`json:"port"`
-	Scheme 		 string		`json:"scheme"`
-	IsAliveFlag  bool		`json:"is_alive"`
-	TempDown 	 bool		`json:"-"`
-	Cluster 	 string		`json:"cluster"`
-	Weight       int		`json:"weight"`
+	Host        string `json:"host"`
+	Port        int    `json:"port"`
+	Scheme      string `json:"scheme"`
+	IsAliveFlag bool   `json:"is_alive"`
+	TempDown    bool   `json:"-"`
+	Cluster     string `json:"cluster"`
+	Weight      int    `json:"weight"`
 }
 
 //NewServer create a server instance
 func NewServer(scheme string, host string, port int) *Server {
 	return &Server{
-		Scheme:       scheme,
-		Host:         host,
-		Port:         port,
-		IsAliveFlag:  true,
-		TempDown:     false,
-		Cluster:      ClusterUnknown,
-		Weight: 	  DefaultWight,
+		Scheme:      scheme,
+		Host:        host,
+		Port:        port,
+		IsAliveFlag: true,
+		TempDown:    false,
+		Cluster:     ClusterUnknown,
+		Weight:      DefaultWight,
 	}
 }
 
@@ -71,7 +71,7 @@ func (s *Server) GetScheme() string {
 }
 
 //SetAlive ...
-func (s *Server) SetAlive(isAliveFlag bool) *Server{
+func (s *Server) SetAlive(isAliveFlag bool) *Server {
 	s.IsAliveFlag = isAliveFlag
 	return s
 }
@@ -92,7 +92,7 @@ func (s *Server) GetCluster() string {
 }
 
 //SetCluster ...
-func (s *Server) SetCluster(cluster string) *Server{
+func (s *Server) SetCluster(cluster string) *Server {
 	if len(cluster) == 0 {
 		cluster = ClusterUnknown
 	}
@@ -112,12 +112,12 @@ func (s *Server) IsTempDown() bool {
 }
 
 //GetWeight ...
-func (s *Server)GetWeight() int {
+func (s *Server) GetWeight() int {
 	return s.Weight
 }
 
 //SetWeight ...
-func (s *Server)SetWeight(weight int) *Server {
+func (s *Server) SetWeight(weight int) *Server {
 	s.Weight = weight
 	return s
 }

@@ -12,7 +12,7 @@ import (
 //HTTPRequest ...
 type HTTPRequest struct {
 	*http.Request
-	body 			[]byte
+	body            []byte
 	loadBalancerKey interface{}
 }
 
@@ -24,8 +24,8 @@ func NewHTTPRequest(method, urlStr string, body io.Reader, loadBalancerKey inter
 	}
 
 	rr := &HTTPRequest{
-		Request:         	r,
-		loadBalancerKey:	loadBalancerKey,
+		Request:         r,
+		loadBalancerKey: loadBalancerKey,
 	}
 	if r.Body != nil {
 		rr.body, err = httputil.DumpRequestBody(r)
@@ -39,7 +39,7 @@ func NewHTTPRequest(method, urlStr string, body io.Reader, loadBalancerKey inter
 //CreateHTTPRequest ...
 func CreateHTTPRequest(r *http.Request, requestConfig config.ClientConfig) *HTTPRequest {
 	rr := &HTTPRequest{
-		Request:         r,
+		Request: r,
 	}
 	if requestConfig != nil {
 		rr.loadBalancerKey = requestConfig.GetPropertyAsString(config.LoadBalancerKey, config.DefaultLoadBalancerKey)
@@ -83,16 +83,16 @@ func (r *HTTPRequest) ReplaceURI(newURI *url.URL) {
 }
 
 //GetBodyContents ...
-func (r *HTTPRequest)GetBodyContents() []byte {
+func (r *HTTPRequest) GetBodyContents() []byte {
 	return r.body
 }
 
 //GetBodyLength ...
-func (r *HTTPRequest)GetBodyLength() int {
+func (r *HTTPRequest) GetBodyLength() int {
 	return len(r.body)
 }
 
 //GetHeaders ...
-func (r *HTTPRequest)GetHeaders() map[string][]string {
+func (r *HTTPRequest) GetHeaders() map[string][]string {
 	return r.Header
 }
