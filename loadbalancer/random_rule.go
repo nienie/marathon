@@ -37,7 +37,7 @@ func (o *RandomRule) ChooseFromLoadBalancer(lb LoadBalancer, key interface{}) *s
 		return nil
 	}
 
-	var server *server.Server
+	var selectServer *server.Server
 	rand.Seed(time.Now().UnixNano())
 
 	for count := 0; count < 20; count++ {
@@ -47,11 +47,11 @@ func (o *RandomRule) ChooseFromLoadBalancer(lb LoadBalancer, key interface{}) *s
 			continue
 		}
 
-		server = upList[index]
-		if server.IsAlive() && server.IsTempDown() == false {
-			return server
+		selectServer = upList[index]
+		if selectServer.IsAlive() && selectServer.IsTempDown() == false {
+			return selectServer
 		}
 	}
 
-	return server
+	return nil
 }
