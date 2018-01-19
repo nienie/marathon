@@ -123,7 +123,7 @@ marathon内置限流模块，提供MaxConcurrency/MaxRequest(最大并发/最大
 ``` go
     //Step 1:
     //负载均衡的算法采用随机选择的算法。
-    rule := loadbalancer.NewRandonRule()
+    rule := loadbalancer.NewRandomRule()
     
     //Step 2:
     //设置健康检查的方法。默认提供URLPing的方法
