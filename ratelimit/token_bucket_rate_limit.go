@@ -28,7 +28,7 @@ func NewTokenBucketRateLimit() *TokenBucketRateLimit {
 
 //Allow ...
 func (l *TokenBucketRateLimit) Allow(uri *url.URL, serverStats *server.Stats, requestConfig config.ClientConfig) bool {
-	if uri == nil || serverStats == nil || requestConfig == nil {
+	if uri == nil || requestConfig == nil {
 		return true
 	}
 
@@ -36,12 +36,12 @@ func (l *TokenBucketRateLimit) Allow(uri *url.URL, serverStats *server.Stats, re
 		return true
 	}
 
-	var key string
-	if len(uri.Host) == 0 {
-		key = serverStats.Server.GetHostPort() + uri.Path
-	} else {
-		key = uri.Host + uri.Path
-	}
+	var key = uri.Path
+	//if len(uri.Host) == 0 {
+	//	key = serverStats.Server.GetHostPort() + uri.Path
+	//} else {
+	//	key = uri.Host + uri.Path
+	//}
 
 	bucket := getTokenBucket(key, requestConfig)
 	if bucket == nil {
