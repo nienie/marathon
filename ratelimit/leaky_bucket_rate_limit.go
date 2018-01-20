@@ -36,12 +36,12 @@ func (l *LeakyBucketRateLimit) Allow(uri *url.URL, serverStats *server.Stats, re
 		return true
 	}
 
-	var key = uri.Path
-	//if len(uri.Host) == 0 {
-	//	key = serverStats.Server.GetHostPort() + uri.Path
-	//} else {
-	//	key = uri.Host + uri.Path
-	//}
+	var key string
+	if len(uri.Host) == 0 && serverStats != nil {
+		key = serverStats.Server.GetHostPort() + uri.Path
+	} else {
+		key = uri.Host + uri.Path
+	}
 
 	bucket := getLeakyBucket(key, requestConfig)
 	if bucket == nil {
