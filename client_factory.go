@@ -5,6 +5,7 @@ import (
 
 	"github.com/nienie/marathon/httpclient"
 	"github.com/nienie/marathon/loadbalancer"
+	"github.com/nienie/marathon/logger"
 )
 
 var (
@@ -17,17 +18,17 @@ func init() {
 
 type clientFactory struct {
 	loadBalancers map[string]loadbalancer.LoadBalancer
-	lbLock        sync.Mutex
+	lbLock        *sync.Mutex
 	clients       map[string]*httpclient.LoadBalancerHTTPClient
-	clientLock    sync.Mutex
+	clientLock    *sync.Mutex
 }
 
 func newClientFactory() *clientFactory {
 	return &clientFactory{
 		loadBalancers: make(map[string]loadbalancer.LoadBalancer),
-		lbLock:        sync.Mutex{},
+		lbLock:        &sync.Mutex{},
 		clients:       make(map[string]*httpclient.LoadBalancerHTTPClient),
-		clientLock:    sync.Mutex{},
+		clientLock:    &sync.Mutex{},
 	}
 }
 
@@ -40,7 +41,9 @@ func RegisterLoadBalancer(name string, lb loadbalancer.LoadBalancer) {
 		return
 	}
 	cf.lbLock.Lock()
-	cf.loadBalancers[name] = lb
+	if _, ok := cf.loadBalancers[name]; !ok {
+		cf.loadBalancers[name] = lb
+	}
 	cf.lbLock.Unlock()
 }
 
@@ -53,7 +56,9 @@ func RegisterHTTPClient(name string, client *httpclient.LoadBalancerHTTPClient) 
 		return
 	}
 	cf.clientLock.Lock()
-	cf.clients[name] = client
+	if _, ok := cf.clients[name]; !ok {
+		cf.clients[name] = client
+	}
 	cf.clientLock.Unlock()
 }
 
@@ -65,4 +70,9 @@ func GetLoadBalancer(name string) loadbalancer.LoadBalancer {
 //GetHTTPClient ...
 func GetHTTPClient(name string) *httpclient.LoadBalancerHTTPClient {
 	return cf.clients[name]
+}
+
+//SetLogger ...
+func SetLogger(l logger.Logger) {
+	logger.SetLogger(l)
 }
