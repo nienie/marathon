@@ -43,12 +43,16 @@ func (o *WeightedRoundRobinRule)ChooseFromLoadBalancer(lb LoadBalancer, key inte
         return nil
     }
 
+    o.RLock()
     if !server.CompareServerList(o.Servers, upList) {
+        o.RUnlock()
         o.RefreshServersAndWeights(upList)
+    } else {
+        o.RUnlock()
     }
 
     o.RLock()
-    o.RUnlock()
+    defer o.RUnlock()
     index := o.incrementAndGetModulo(o.Length)
     return o.WeightedServerPool[index]
 }
@@ -66,9 +70,8 @@ func (o *WeightedRoundRobinRule)SetLoadBalancer(lb LoadBalancer) {
 func (o *WeightedRoundRobinRule)RefreshServersAndWeights(servers []*server.Server) {
     if atomic.CompareAndSwapInt32(&o.isRefreshing, int32(0), int32(1)) {
         defer atomic.StoreInt32(&o.isRefreshing, int32(0))
-        o.Servers = servers
         o.Lock()
-        defer o.Unlock()
+        o.Servers = servers
         o.WeightedServerPool = o.WeightedServerPool[:0]
         o.Length = 0
         for _, svr := range servers {
@@ -79,6 +82,7 @@ func (o *WeightedRoundRobinRule)RefreshServersAndWeights(servers []*server.Serve
                 }
             }
         }
+        o.Unlock()
     }
 }
 
