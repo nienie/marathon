@@ -28,30 +28,21 @@ func (o *RandomRule) ChooseFromLoadBalancer(lb LoadBalancer, key interface{}) *s
 		return nil
 	}
 
-	var selectServer *server.Server
-	rand.Seed(time.Now().UnixNano())
-
-	for count := 0; count < 20; count++ {
-		upList := o.GetLoadBalancer().GetReachableServers()
-		allList := o.GetLoadBalancer().GetAllServers()
-		totalCount := len(allList)
-		upCount := len(upList)
-
-		if totalCount == 0 || upCount == 0 {
-			return nil
-		}
-
-		index := rand.Intn(upCount)
-
-		if index >= upCount {
-			continue
-		}
-
-		selectServer = upList[index]
-		if selectServer.IsAlive() && selectServer.IsTempDown() == false {
-			return selectServer
-		}
+	allList := o.GetLoadBalancer().GetAllServers()
+	totalCount := len(allList)
+	if totalCount == 0 {
+		return nil
 	}
 
-	return nil
+	upList := o.GetLoadBalancer().GetReachableServers()
+	upCount := len(upList)
+	if upCount == 0 {
+		return nil
+	}
+
+	rand.Seed(time.Now().UnixNano())
+	var selectServer *server.Server
+	index := rand.Intn(upCount)
+	selectServer = upList[index]
+	return selectServer
 }

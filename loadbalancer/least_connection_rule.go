@@ -28,13 +28,15 @@ func (o *LeastConnectionRule) ChooseFromLoadBalancer(lb LoadBalancer, key interf
 		return nil
 	}
 
-	reachableServers := lb.GetReachableServers()
-	allServers := lb.GetAllServers()
+	allList := o.GetLoadBalancer().GetAllServers()
+	totalCount := len(allList)
+	if totalCount == 0 {
+		return nil
+	}
 
-	upCount := len(reachableServers)
-	serverCount := len(allServers)
-
-	if upCount == 0 || serverCount == 0 {
+	upList := o.GetLoadBalancer().GetReachableServers()
+	upCount := len(upList)
+	if upCount == 0 {
 		return nil
 	}
 
@@ -44,10 +46,7 @@ func (o *LeastConnectionRule) ChooseFromLoadBalancer(lb LoadBalancer, key interf
 		leastConnections int64 = math.MaxInt64
 	)
 	currentTime := time.Duration(time.Now().UnixNano())
-	for _, svr := range reachableServers {
-		if svr.IsTempDown() {
-			continue
-		}
+	for _, svr := range upList {
 		serverStats := lbStats.GetSingleServerStats(svr)
 		cnt := serverStats.GetActiveRequestsCount(currentTime)
 		if cnt < leastConnections {

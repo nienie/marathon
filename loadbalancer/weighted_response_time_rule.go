@@ -28,13 +28,15 @@ func (r *WeightedResponseTimeRule) ChooseFromLoadBalancer(lb LoadBalancer, key i
 		return nil
 	}
 
-	reachableServers := lb.GetReachableServers()
-	allServers := lb.GetAllServers()
+	allList := r.GetLoadBalancer().GetAllServers()
+	totalCount := len(allList)
+	if totalCount == 0 {
+		return nil
+	}
 
-	upCount := len(reachableServers)
-	serverCount := len(allServers)
-
-	if upCount == 0 || serverCount == 0 {
+	upList := r.GetLoadBalancer().GetReachableServers()
+	upCount := len(upList)
+	if upCount == 0 {
 		return nil
 	}
 
@@ -45,7 +47,7 @@ func (r *WeightedResponseTimeRule) ChooseFromLoadBalancer(lb LoadBalancer, key i
 		selectedServer      *server.Server
 	)
 
-	for i, svr := range reachableServers {
+	for i, svr := range upList {
 		wg.Add(1)
 		serverStats := lb.GetLoadBalancerStats().GetSingleServerStats(svr)
 		go func(serverStats *server.Stats, index int, wg *sync.WaitGroup) {
@@ -74,8 +76,8 @@ func (r *WeightedResponseTimeRule) ChooseFromLoadBalancer(lb LoadBalancer, key i
 	}
 	wg.Wait()
 
-	for i, svr := range reachableServers {
-		if serversResponseTime[i] < leastResponseTime && svr.IsTempDown() == false {
+	for i, svr := range upList {
+		if serversResponseTime[i] < leastResponseTime {
 			leastResponseTime = serversResponseTime[i]
 			selectedServer = svr
 		}

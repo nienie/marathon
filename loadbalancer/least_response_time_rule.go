@@ -26,13 +26,15 @@ func (o *LeastResponseTimeRule) ChooseFromLoadBalancer(lb LoadBalancer, key inte
 		return nil
 	}
 
-	reachableServers := lb.GetReachableServers()
-	allServers := lb.GetAllServers()
+	allList := o.GetLoadBalancer().GetAllServers()
+	totalCount := len(allList)
+	if totalCount == 0 {
+		return nil
+	}
 
-	upCount := len(reachableServers)
-	serverCount := len(allServers)
-
-	if upCount == 0 || serverCount == 0 {
+	upList := o.GetLoadBalancer().GetReachableServers()
+	upCount := len(upList)
+	if upCount == 0 {
 		return nil
 	}
 
@@ -42,14 +44,11 @@ func (o *LeastResponseTimeRule) ChooseFromLoadBalancer(lb LoadBalancer, key inte
 		leastResponseTime = math.MaxFloat64
 	)
 
-	for _, svr := range reachableServers {
-		if svr.IsTempDown() {
-			continue
-		}
+	for _, svr := range upList {
 		serverStats := lbStats.GetSingleServerStats(svr)
-		avg := serverStats.GetResponseTimeAvg()
-		if avg < leastResponseTime {
-			leastResponseTime = avg
+		avgRespTime := serverStats.GetResponseTimeAvg()
+		if avgRespTime < leastResponseTime {
+			leastResponseTime = avgRespTime
 			selectedServer = svr
 		}
 	}

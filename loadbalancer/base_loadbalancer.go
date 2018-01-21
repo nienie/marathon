@@ -335,9 +335,15 @@ func (o *BaseLoadBalancer) MarkServerDown(svr *server.Server) {
 
 //GetReachableServers ...
 func (o *BaseLoadBalancer) GetReachableServers() []*server.Server {
+	reachableServers := make([]*server.Server, 0, 100)
 	o.upServerLock.RLock()
 	defer o.upServerLock.RUnlock()
-	return server.CloneServerList(o.upServersList)
+	for _, svr := range o.upServersList {
+		if svr.IsAlive() && !svr.IsTempDown() {
+			reachableServers = append(reachableServers, svr)
+		}
+	}
+	return reachableServers
 }
 
 //GetAllServers ...

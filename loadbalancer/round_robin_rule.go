@@ -28,31 +28,20 @@ func (o *RoundRobinRule) ChooseFromLoadBalancer(lb LoadBalancer, key interface{}
 		return nil
 	}
 
-	var server *server.Server
-	for count := 0; count < 20; count++ {
-		reachableServers := lb.GetReachableServers()
-		allServers := lb.GetAllServers()
-
-		upCount := len(reachableServers)
-		serverCount := len(allServers)
-
-		if upCount == 0 || serverCount == 0 {
-			return nil
-		}
-
-		nextServerIndex := o.incrementAndGetModulo(serverCount)
-
-		server = allServers[nextServerIndex]
-
-		if server == nil {
-			continue
-		}
-
-		if server.IsAlive() && server.IsTempDown() == false {
-			return server
-		}
+	allList := o.GetLoadBalancer().GetAllServers()
+	totalCount := len(allList)
+	if totalCount == 0 {
+		return nil
 	}
-	return server
+
+	upList := o.GetLoadBalancer().GetReachableServers()
+	upCount := len(upList)
+	if upCount == 0 {
+		return nil
+	}
+
+	nextServerIndex := o.incrementAndGetModulo(upCount)
+	return upList[nextServerIndex]
 }
 
 func (o *RoundRobinRule) incrementAndGetModulo(modulo int) int {

@@ -30,13 +30,15 @@ func (r *HashRule) ChooseFromLoadBalancer(lb LoadBalancer, key interface{}) *ser
 		return nil
 	}
 
-	reachableServers := lb.GetReachableServers()
-	allServers := lb.GetAllServers()
+	allList := r.GetLoadBalancer().GetAllServers()
+	totalCount := len(allList)
+	if totalCount == 0 {
+		return nil
+	}
 
-	upCount := len(reachableServers)
-	serverCount := len(allServers)
-
-	if upCount == 0 || serverCount == 0 {
+	upList := r.GetLoadBalancer().GetReachableServers()
+	upCount := len(upList)
+	if upCount == 0 {
 		return nil
 	}
 
@@ -48,10 +50,5 @@ func (r *HashRule) ChooseFromLoadBalancer(lb LoadBalancer, key interface{}) *ser
 		return nil
 	}
 
-	selectedServer := reachableServers[i%uint64(upCount)]
-	if selectedServer.IsTempDown() {
-		return nil
-	}
-
-	return selectedServer
+	return upList[i%uint64(upCount)]
 }
