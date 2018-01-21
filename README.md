@@ -42,8 +42,8 @@ marathon
 
 2. 软负载均衡。
     
-    当服务发现或者配置获取到一堆ip和port时，需要有合适的策略选取访问的机器。marathon提供软负载均衡，提供SmoothWeigtedRoundRobin(平滑的加权轮询)、Random（随机）、RoundRobin（轮询）、
-LeastConnection（最少连接数）、LeastResponseTime（最少响应时间）、Hash（哈希）、WeightedResponseTime（加权的最小响应时间）七中常用的负载均衡算法来选取机器。marathon提供软负载均衡的框架和负载均衡算法的抽象loadbalancer.Rule，
+    当服务发现或者配置获取到一堆ip和port时，需要有合适的策略选取访问的机器。marathon提供软负载均衡，提供SmoothWeightedRoundRobin(平滑的加权轮询)、WeightedRoundRobin（加权的轮询）、RoundRobin（轮询）、Random（随机）、
+LeastConnection（最少连接数）、LeastResponseTime（最少响应时间）、Hash（哈希）、WeightedResponseTime（加权的最小响应时间）八种常用的负载均衡算法来选取机器。marathon提供软负载均衡的框架和负载均衡算法的抽象loadbalancer.Rule，
 用户可以很方便的开发自己的负载均衡算法。
 
 -----------------

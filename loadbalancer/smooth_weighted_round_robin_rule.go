@@ -45,8 +45,9 @@ func (o *SmoothWeightedRoundRobinRule)ChooseFromLoadBalancer(lb LoadBalancer, ke
 
     //upServerList has changed, so refresh the server list and it's weight
     if !server.CompareServerList(o.Servers, upList) {
-        o.refreshServersAndWeights(upList)
+        o.RefreshServersAndWeights(upList)
     }
+
     o.RLock()
     s := o.Weighted.Next()
     o.RUnlock()
@@ -57,7 +58,8 @@ func (o *SmoothWeightedRoundRobinRule)ChooseFromLoadBalancer(lb LoadBalancer, ke
     return s.(*server.Server)
 }
 
-func (o *SmoothWeightedRoundRobinRule)refreshServersAndWeights(servers []*server.Server) {
+//RefreshServersAndWeights ...
+func (o *SmoothWeightedRoundRobinRule)RefreshServersAndWeights(servers []*server.Server) {
     if atomic.CompareAndSwapInt32(&o.isRefreshing, int32(0), int32(1)) {
         defer atomic.StoreInt32(&o.isRefreshing, int32(0))
         o.Servers = servers
@@ -74,6 +76,6 @@ func (o *SmoothWeightedRoundRobinRule)refreshServersAndWeights(servers []*server
 func (o *SmoothWeightedRoundRobinRule)SetLoadBalancer(lb LoadBalancer) {
     o.BaseRule.SetLoadBalancer(lb)
     if lb != nil {
-        o.refreshServersAndWeights(lb.GetReachableServers())
+        o.RefreshServersAndWeights(lb.GetReachableServers())
     }
 }
