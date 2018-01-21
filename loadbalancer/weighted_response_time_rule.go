@@ -28,12 +28,6 @@ func (r *WeightedResponseTimeRule) ChooseFromLoadBalancer(lb LoadBalancer, key i
 		return nil
 	}
 
-	allList := r.GetLoadBalancer().GetAllServers()
-	totalCount := len(allList)
-	if totalCount == 0 {
-		return nil
-	}
-
 	upList := r.GetLoadBalancer().GetReachableServers()
 	upCount := len(upList)
 	if upCount == 0 {

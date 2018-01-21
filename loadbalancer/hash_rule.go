@@ -20,23 +20,17 @@ func NewHashRule() Rule {
 }
 
 //Choose ...
-func (r *HashRule) Choose(key interface{}) *server.Server {
-	return r.ChooseFromLoadBalancer(r.GetLoadBalancer(), key)
+func (o *HashRule) Choose(key interface{}) *server.Server {
+	return o.ChooseFromLoadBalancer(o.GetLoadBalancer(), key)
 }
 
 //ChooseFromLoadBalancer ...
-func (r *HashRule) ChooseFromLoadBalancer(lb LoadBalancer, key interface{}) *server.Server {
+func (o *HashRule) ChooseFromLoadBalancer(lb LoadBalancer, key interface{}) *server.Server {
 	if lb == nil {
 		return nil
 	}
 
-	allList := r.GetLoadBalancer().GetAllServers()
-	totalCount := len(allList)
-	if totalCount == 0 {
-		return nil
-	}
-
-	upList := r.GetLoadBalancer().GetReachableServers()
+	upList := o.GetLoadBalancer().GetReachableServers()
 	upCount := len(upList)
 	if upCount == 0 {
 		return nil
