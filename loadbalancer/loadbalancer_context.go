@@ -34,6 +34,24 @@ func NewLoadBalancerContext(clientConfig config.ClientConfig, lb LoadBalancer) *
 	return ctx
 }
 
+//SetLoadBalancer ...
+func (o *Context)SetLoadBalancer(lb LoadBalancer) *Context{
+	o.LoadBalancer = lb
+	return o
+}
+
+//SetRetryHandler ...
+func (o *Context)SetRetryHandler(handler retry.Handler) *Context {
+	o.RetryHandler = handler
+	return o
+}
+
+//SetClientName ...
+func (o *Context)SetClientName(name string) *Context {
+	o.ClientName = name
+	return o
+}
+
 func (o *Context) recordStats(stats *server.Stats, responseTime int64) {
 	if stats == nil {
 		return

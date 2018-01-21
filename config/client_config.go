@@ -45,6 +45,9 @@ func NewDefaultClientConfig(clientName string, props *properties.Properties) *De
 	if props == nil {
 		props = properties.NewProperties()
 	}
+	if len(clientName) == 0 {
+		clientName = DefaultClientName
+	}
 	cfg := &DefaultClientConfig{
 		InternalProperties: properties.NewProperties(),
 		ExternalProperties: props,

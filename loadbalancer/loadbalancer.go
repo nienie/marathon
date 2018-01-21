@@ -2,6 +2,7 @@ package loadbalancer
 
 import (
 	"github.com/nienie/marathon/server"
+	"github.com/nienie/marathon/loadbalancer/ping"
 )
 
 //LoadBalancer Interface that defines the operations for a software loadbalancer.
@@ -38,4 +39,22 @@ type LoadBalancer interface {
 
 	//GetLoadBalancerStats ...
 	GetLoadBalancerStats() *Stats
+
+	//SetPing ...
+	SetPing(ping ping.Ping)
+
+	//GetPing ...
+	GetPing() ping.Ping
+
+	//SetPingStrategy ...
+	SetPingStrategy(s ping.Strategy)
+
+	//GetPingStrategy ...
+	GetPingStrategy() ping.Strategy
+
+	//SetRule ...
+	SetRule(r Rule)
+
+	//GetRule ...
+	GetRule() Rule
 }

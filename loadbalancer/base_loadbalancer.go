@@ -26,9 +26,9 @@ type BaseLoadBalancer struct {
 	changeListeners       []server.ListChangeListener
 	serverStatusListeners []server.StatusChangeListener
 
-	allServerLock      sync.RWMutex
-	upServerLock       sync.RWMutex
-	tempDownServerLock sync.RWMutex
+	allServerLock      *sync.RWMutex
+	upServerLock       *sync.RWMutex
+	tempDownServerLock *sync.RWMutex
 	allServersList     []*server.Server
 	upServersList      []*server.Server
 	tempDownServerList []*server.Server
@@ -51,12 +51,12 @@ func NewBaseLoadBalancer(clientConfig config.ClientConfig, rule Rule, pingAction
 		recoverInterval:       time.Second * 1,
 		changeListeners:       make([]server.ListChangeListener, 0),
 		serverStatusListeners: make([]server.StatusChangeListener, 0),
-		allServersList:        make([]*server.Server, 0),
-		upServersList:         make([]*server.Server, 0),
-		tempDownServerList:    make([]*server.Server, 0),
-		allServerLock:         sync.RWMutex{},
-		upServerLock:          sync.RWMutex{},
-		tempDownServerLock:    sync.RWMutex{},
+		allServersList:        make([]*server.Server, 0, 20),
+		upServersList:         make([]*server.Server, 0, 20),
+		tempDownServerList:    make([]*server.Server, 0, 20),
+		allServerLock:         &sync.RWMutex{},
+		upServerLock:          &sync.RWMutex{},
+		tempDownServerLock:    &sync.RWMutex{},
 	}
 	if loadBalancer.pingStrategy == nil {
 		loadBalancer.pingStrategy = ping.NewParallelStrategy()
@@ -108,6 +108,16 @@ func (o *BaseLoadBalancer) SetPing(ping ping.Ping) {
 //GetPing ...
 func (o *BaseLoadBalancer) GetPing() ping.Ping {
 	return o.pingAction
+}
+
+//SetPingStrategy ...
+func (o *BaseLoadBalancer)SetPingStrategy(strategy ping.Strategy) {
+	o.pingStrategy = strategy
+}
+
+//GetPingStrategy ...
+func (o *BaseLoadBalancer)GetPingStrategy() ping.Strategy {
+	return o.pingStrategy
 }
 
 func (o *BaseLoadBalancer) setupPingTask() {
