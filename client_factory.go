@@ -130,9 +130,15 @@ func GetBaseLoadBalancer(clientConfig config.ClientConfig) loadbalancer.LoadBala
 	}
 
 	ruleName := clientConfig.GetPropertyAsString(config.LoadBalancerRule, config.SmoothWeightedRoundRobinRule)
+	if _, ok := ruleMap[ruleName]; !ok {
+		ruleName = config.SmoothWeightedRoundRobinRule
+	}
 	rule := ruleMap[ruleName]()
 
 	pingStrategyName := clientConfig.GetPropertyAsString(config.PingStrategy, config.ParallelPingStrategy)
+	if _, ok := pingStrategyName[pingStrategyName]; !ok {
+		pingStrategyName = config.ParallelPingStrategy
+	}
 	strategy := pingStrategyMap[pingStrategyName]()
 
 	lb = loadbalancer.NewBaseLoadBalancer(clientConfig, rule, nil, strategy)
