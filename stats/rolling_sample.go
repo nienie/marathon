@@ -108,7 +108,7 @@ func (s *RollingSample) AvgPerSecond() []float64 {
 	ret := make([]float64, 0, s.WindowSize)
 	var timestamps byInt64
 	s.RLock()
-	for timestamp, _ := range s.Buckets {
+	for timestamp := range s.Buckets {
 		if currentTime-timestamp > int64(s.WindowSize) {
 			continue
 		}

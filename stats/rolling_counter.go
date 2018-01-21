@@ -23,7 +23,7 @@ func NewRollingCounter(windowSize int) *RollingCounter {
 	}
 }
 
-//Increment ...
+//Inc ...
 func (c *RollingCounter) Inc(i int64) {
 	currentTime := time.Now().Unix()
 	c.Lock()
@@ -52,7 +52,7 @@ func (c *RollingCounter) removeExpiredBuckets(currentTime int64) {
 	}
 }
 
-//Decrement ...
+//Dec ...
 func (c *RollingCounter) Dec(i int64) {
 	currentTime := time.Now().Unix()
 	c.Lock()
