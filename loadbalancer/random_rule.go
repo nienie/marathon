@@ -10,11 +10,15 @@ import (
 //RandomRule A loadbalacing strategy that randomly distributes traffic amongst existing servers.
 type RandomRule struct {
 	BaseRule
+	Random *rand.Rand
 }
 
 //NewRandomRule ...
 func NewRandomRule() Rule {
-	return &RandomRule{}
+	s := rand.NewSource(time.Now().UnixNano())
+	return &RandomRule{
+		Random:		rand.New(s),
+	}
 }
 
 //Choose ...
@@ -40,9 +44,8 @@ func (o *RandomRule) ChooseFromLoadBalancer(lb LoadBalancer, key interface{}) *s
 		return nil
 	}
 
-	rand.Seed(time.Now().UnixNano())
 	var selectServer *server.Server
-	index := rand.Intn(upCount)
+	index := o.Random.Intn(upCount)
 	selectServer = upList[index]
 	return selectServer
 }
