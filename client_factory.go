@@ -136,7 +136,7 @@ func GetBaseLoadBalancer(clientConfig config.ClientConfig) loadbalancer.LoadBala
 	rule := ruleMap[ruleName]()
 
 	pingStrategyName := clientConfig.GetPropertyAsString(config.PingStrategy, config.ParallelPingStrategy)
-	if _, ok := pingStrategyName[pingStrategyName]; !ok {
+	if _, ok := pingStrategyMap[pingStrategyName]; !ok {
 		pingStrategyName = config.ParallelPingStrategy
 	}
 	strategy := pingStrategyMap[pingStrategyName]()
