@@ -403,7 +403,7 @@ TokenBucket(令牌桶)和LeakyBucket(漏桶)三种限流算法。使用示例如
     }        
     
     //SetLevel ...
-    func (l *MyLogger)SetLevel(Level) {
+    func (l *MyLogger)SetLevel(level Level) {
         //TODO: Add your code
     }
     

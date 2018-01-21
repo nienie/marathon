@@ -25,7 +25,7 @@ func NewURLPing(pingAppendString, expectedContent string) Ping {
 //IsAlive ...
 func (p *URLPing) IsAlive(svr *server.Server) bool {
 	urlStr := ""
-	urlStr = urlStr + svr.GetScheme()
+	urlStr = urlStr + svr.GetScheme() + "://"
 	urlStr = urlStr + svr.GetHostPort()
 	urlStr = urlStr + p.PingAppendString
 	resp, err := http.Get(urlStr)
@@ -38,10 +38,7 @@ func (p *URLPing) IsAlive(svr *server.Server) bool {
 	}
 
 	defer resp.Body.Close()
-	responseContent, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return false
-	}
+	responseContent, _ := ioutil.ReadAll(resp.Body)
 
 	if p.ExpectedContent == string(responseContent) {
 		return true

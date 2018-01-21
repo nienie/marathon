@@ -25,11 +25,11 @@ func NewTimer(name string) *Timer {
 
 //Schedule ...
 func (t *Timer) Schedule(task func(), period time.Duration, delay time.Duration) {
-	if task == nil || period <= 0 || delay < 0 {
+	if task == nil || period <= time.Duration(0) || delay < time.Duration(0) {
 		return
 	}
 
-	if atomic.CompareAndSwapInt32(&t.isRunning, 0, 1) {
+	if atomic.CompareAndSwapInt32(&t.isRunning, int32(0), int32(1)) {
 		go func() {
 			if delay > 0 {
 				dt := time.After(delay)
@@ -60,7 +60,7 @@ func (t *Timer) Schedule(task func(), period time.Duration, delay time.Duration)
 
 //Cancel ...
 func (t *Timer) Cancel() {
-	if atomic.CompareAndSwapInt32(&t.isRunning, 1, 0) {
+	if atomic.CompareAndSwapInt32(&t.isRunning, int32(1), int32(0)) {
 		//stop the Timer, does not close the channel, to prevent a read from the channel succeeding incorrectly.
 		t.stop <- true
 	}

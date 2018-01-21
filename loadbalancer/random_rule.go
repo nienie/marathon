@@ -40,7 +40,7 @@ func (o *RandomRule) ChooseFromLoadBalancer(lb LoadBalancer, key interface{}) *s
 		if totalCount == 0 || upCount == 0 {
 			return nil
 		}
-		
+
 		index := rand.Intn(upCount)
 
 		if index >= upCount {
