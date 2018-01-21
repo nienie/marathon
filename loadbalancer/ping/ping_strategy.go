@@ -3,6 +3,7 @@ package ping
 import (
 	"sync"
 
+	"github.com/nienie/marathon/logger"
 	"github.com/nienie/marathon/server"
 )
 
@@ -45,15 +46,15 @@ func NewParallelStrategy() Strategy {
 func (o *ParallelStrategy) PingServers(ping Ping, servers []*server.Server) []bool {
 	numCandidates := len(servers)
 	results := make([]bool, numCandidates)
-	waitGroup := sync.WaitGroup{}
+	wg := &sync.WaitGroup{}
 	for i := 0; i < numCandidates; i++ {
-		waitGroup.Add(1)
+		wg.Add(1)
 		go func() {
-			defer waitGroup.Done()
+			defer wg.Done()
 			results[i] = tryPing(ping, servers[i])
 		}()
 	}
-	waitGroup.Wait()
+	wg.Wait()
 	return results
 }
 
@@ -61,7 +62,7 @@ func tryPing(ping Ping, server *server.Server) bool {
 	isAlive := false
 	defer func() {
 		if r := recover(); r != nil {
-			//TODO: Add Logger
+			logger.Warnf(nil, "err_msg=ping server %s paniced||err=%v", server.GetHostPort(), r)
 			return
 		}
 	}()

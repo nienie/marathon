@@ -149,7 +149,7 @@ func (c *Command) execute(ctx context.Context, exeCtx *command.ExecutionInfoCont
 }
 
 func (c *Command) recordStats(ctx context.Context, stats *server.Stats, response client.Response, err error, responseTime time.Duration) {
-	c.LoadBalancerContext.NoteRequestCompletion(stats, response, err, int64(responseTime/time.Millisecond), c.RetryHandler)
+	c.LoadBalancerContext.NoteRequestCompletion(ctx, stats, response, err, int64(responseTime/time.Millisecond), c.RetryHandler)
 }
 
 func (c *Command) retryPolicy(maxRetries int, same bool) command.RetryChecker {
