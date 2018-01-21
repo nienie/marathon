@@ -307,7 +307,7 @@ TokenBucket(令牌桶)和LeakyBucket(漏桶)三种限流算法。使用示例如
     type MyCollector struct {}
     
     //RPC 实现自己的上报逻辑...
-    func (c *MyCollector)RPC(context.Context, client.Request, client.Response, error, time.Duration) {
+    func (c *MyCollector)RPC(ctx context.Context, req client.Request, resp client.Response, err error, t time.Duration) {
         //TODO: Add your code ...
     }
     
