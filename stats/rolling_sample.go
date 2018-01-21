@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/rcrowley/go-metrics"
+	"sort"
 )
 
 //RollingSample ...
@@ -105,13 +106,24 @@ func (s *RollingSample) Percentiles(ps []float64) []float64 {
 func (s *RollingSample) AvgPerSecond() []float64 {
 	currentTime := time.Now().Unix()
 	ret := make([]float64, 0, s.WindowSize)
+	var timestamps byInt64
 	s.RLock()
-	for timestamp, data := range s.Buckets {
+	for timestamp, _ := range s.Buckets {
 		if currentTime-timestamp > int64(s.WindowSize) {
 			continue
 		}
-		ret = append(ret, metrics.SampleMean(data))
+		timestamps = append(timestamps, timestamp)
+	}
+	sort.Sort(timestamps)
+	for _, timestamp := range timestamps {
+		ret = append(ret, metrics.SampleMean(s.Buckets[timestamp]))
 	}
 	s.RUnlock()
 	return ret
 }
+
+type byInt64 []int64
+
+func (c byInt64) Len() int           { return len(c) }
+func (c byInt64) Swap(i, j int)      { c[i], c[j] = c[j], c[i] }
+func (c byInt64) Less(i, j int) bool { return c[i] < c[j] }
