@@ -58,7 +58,7 @@ func CloneServerList(serverList []*Server) []*Server {
 	return list
 }
 
-//ParseServerListString convert a string like "http://127.0.0.1:8080@cluster1,http://localhost:8080@cluster2" into slice Server
+//ParseServerListString convert a string like "http://127.0.0.1:8080|10@cluster1,http://localhost:8080|20@cluster2" into slice Server
 func ParseServerListString(svrListStr string) ([]*Server, error) {
 	if len(svrListStr) == 0 {
 		return nil, fmt.Errorf("empty string")
@@ -67,6 +67,7 @@ func ParseServerListString(svrListStr string) ([]*Server, error) {
 	ret := make([]*Server, 0)
 	svrList := strings.Split(svrListStr, Delimiter)
 	for _, svr := range svrList {
+		svr = strings.TrimSpace(svr)
 		if len(svr) == 0 {
 			continue
 		}
@@ -75,6 +76,7 @@ func ParseServerListString(svrListStr string) ([]*Server, error) {
 			scheme  string
 			host    string
 			port    int
+			weight  = DefaultWight
 			cluster string
 		)
 
@@ -88,6 +90,17 @@ func ParseServerListString(svrListStr string) ([]*Server, error) {
 		if pos != -1 {
 			cluster = svr[pos+1:]
 			svr = svr[:pos]
+		}
+
+		pos = strings.Index(svr, "|")
+		if pos != -1 {
+			s := svr[pos+1:]
+			svr = svr[:pos]
+			w, err := strconv.ParseInt(s, 10, 32)
+			if err != nil {
+				return nil, err
+			}
+			weight = int(w)
 		}
 
 		pos = strings.Index(svr, ":")
@@ -104,6 +117,7 @@ func ParseServerListString(svrListStr string) ([]*Server, error) {
 
 		server := NewServer(scheme, host, port)
 		server.SetCluster(cluster)
+		server.SetWeight(weight)
 		ret = append(ret, server)
 	}
 	return ret, nil
