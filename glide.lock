@@ -1,5 +1,5 @@
 hash: d323b2257b0e683c76d56673405ecdd99032c9fe78c605a7b84a6be341273bf5
-updated: 2018-01-11T17:53:02.281558809+08:00
+updated: 2018-01-21T15:30:15.089263605+08:00
 imports:
 - name: github.com/magiconair/properties
   version: d419a98cdbed11a922bf76f257b7c4be79b50e73
@@ -7,6 +7,8 @@ imports:
   version: 31f0106b4474f14bc441575c19d3a5fa21aa1f6c
 - name: github.com/rcrowley/go-metrics
   version: e181e095bae94582363434144c61a9653aff6e50
+- name: github.com/smallnest/weighted
+  version: 3a1cb727ddef772b9554b2ea0999659c140687f6
 testImports:
 - name: github.com/davecgh/go-spew
   version: ecdeabc65495df2dec95d7c4a4c3e021903035e5

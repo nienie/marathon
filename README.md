@@ -42,8 +42,8 @@ marathon
 
 2. 软负载均衡。
     
-    当服务发现或者配置获取到一堆ip和port时，需要有合适的策略选取访问的机器。marathon提供软负载均衡，提供Random（随机）、RoundRobin（轮询）、
-LeastConnection（最少连接数）、LeastResponseTime（最少响应时间）、Hash（哈希）、WeightedResponseTime（加权的最小响应时间）六中常用的负载均衡算法来选取机器。marathon提供软负载均衡的框架和负载均衡算法的抽象loadbalancer.Rule，
+    当服务发现或者配置获取到一堆ip和port时，需要有合适的策略选取访问的机器。marathon提供软负载均衡，提供SmoothWeigtedRoundRobin(平滑的加权轮询)、Random（随机）、RoundRobin（轮询）、
+LeastConnection（最少连接数）、LeastResponseTime（最少响应时间）、Hash（哈希）、WeightedResponseTime（加权的最小响应时间）七中常用的负载均衡算法来选取机器。marathon提供软负载均衡的框架和负载均衡算法的抽象loadbalancer.Rule，
 用户可以很方便的开发自己的负载均衡算法。
 
 -----------------
@@ -146,7 +146,8 @@ marathon内置限流模块，提供MaxConcurrency/MaxRequest(最大并发/最大
     
     //Step 6:
     //创建serverList对象，解析clientConfig中的服务器列表
-    //服务器列表采用这种格式：http://127.0.0.1:8080@cluster1,http://localhost:8080@cluster2
+    //服务器列表采用这种格式："http://127.0.0.1:8080|10@cluster1,http://localhost:8080|20@cluster2"
+    //"|"后的数字是权重，"@"后的字符串表示所在的集群
     serverList := server.NewConfigurationBasedServerList(clientConfig)
     
     //Step 7:
