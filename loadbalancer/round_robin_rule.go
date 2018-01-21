@@ -28,7 +28,7 @@ func (o *RoundRobinRule) ChooseFromLoadBalancer(lb LoadBalancer, key interface{}
 		return nil
 	}
 
-	upList := o.GetLoadBalancer().GetReachableServers()
+	upList := lb.GetReachableServers()
 	upCount := len(upList)
 	if upCount == 0 {
 		return nil

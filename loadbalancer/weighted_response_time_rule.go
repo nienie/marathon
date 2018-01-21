@@ -18,17 +18,17 @@ func NewWeightedResponseTimeRule() Rule {
 }
 
 //Choose ...
-func (r *WeightedResponseTimeRule) Choose(key interface{}) *server.Server {
-	return r.ChooseFromLoadBalancer(r.GetLoadBalancer(), key)
+func (o *WeightedResponseTimeRule) Choose(key interface{}) *server.Server {
+	return o.ChooseFromLoadBalancer(o.GetLoadBalancer(), key)
 }
 
 //ChooseFromLoadBalancer ...
-func (r *WeightedResponseTimeRule) ChooseFromLoadBalancer(lb LoadBalancer, key interface{}) *server.Server {
+func (o *WeightedResponseTimeRule) ChooseFromLoadBalancer(lb LoadBalancer, key interface{}) *server.Server {
 	if lb == nil {
 		return nil
 	}
 
-	upList := r.GetLoadBalancer().GetReachableServers()
+	upList := lb.GetReachableServers()
 	upCount := len(upList)
 	if upCount == 0 {
 		return nil

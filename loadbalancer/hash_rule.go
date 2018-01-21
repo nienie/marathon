@@ -30,7 +30,7 @@ func (o *HashRule) ChooseFromLoadBalancer(lb LoadBalancer, key interface{}) *ser
 		return nil
 	}
 
-	upList := o.GetLoadBalancer().GetReachableServers()
+	upList := lb.GetReachableServers()
 	upCount := len(upList)
 	if upCount == 0 {
 		return nil

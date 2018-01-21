@@ -32,7 +32,7 @@ func (o *RandomRule) ChooseFromLoadBalancer(lb LoadBalancer, key interface{}) *s
 		return nil
 	}
 
-	upList := o.GetLoadBalancer().GetReachableServers()
+	upList := lb.GetReachableServers()
 	upCount := len(upList)
 	if upCount == 0 {
 		return nil
