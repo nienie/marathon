@@ -49,7 +49,6 @@ func TestNewHTTPLoadBalancerClient(t *testing.T) {
 	assert.NotNil(t, req)
 
 	resp, err := httpClient.Do(nil, req, nil)
-	fmt.Println(err)
 	assert.Nil(t, err)
 	assert.NotNil(t, resp)
 	defer resp.Body.Close()

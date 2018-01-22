@@ -57,7 +57,6 @@ type LoadBalancerHTTPClient struct {
 	*http.Client
 	*loadbalancer.BaseLoadBalancerClient
 	HTTPClientName string
-	Transport      *transport.Transport
 	BeforeHooks    []BeforeHTTPHook
 	AfterHooks     []AfterHTTHook
 	ClientConfig   config.ClientConfig
@@ -87,7 +86,6 @@ func NewHTTPLoadBalancerClient(clientConfig config.ClientConfig, lb loadbalancer
 		Client:                 originalClient,
 		BaseLoadBalancerClient: loadBalancerClient,
 		HTTPClientName:         clientConfig.GetClientName(),
-		Transport:              trans,
 		BeforeHooks:            make([]BeforeHTTPHook, 0),
 		AfterHooks:             []AfterHTTHook{loggerAfterHook},
 		ClientConfig:			clientConfig,
