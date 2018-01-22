@@ -21,7 +21,7 @@ var (
 			responseBody string
 			format       = "method=%s||host=%s||uri=%s||args=%s||body=%v||request_header=%v||response=%v||status_code=%d||response_header=%v||err=%v"
 		)
-		if req.GetBodyLength() > 8196 { //large than 8K, perhaps it's a file, so do not log it
+		if req.GetBodyLength() > 8196 { //larger than 8K, perhaps it's a file, so do not log it
 			requestBody = "<large request body>"
 		} else {
 			requestBody = string(req.GetBodyContents())
@@ -34,7 +34,7 @@ var (
 		}
 
 		payload, _ := resp.GetPayload()
-		if len(payload) > 8196 { //large than 8K, perhaps it's a file, so do not log it
+		if len(payload) > 8196 { //larger than 8K, perhaps it's a file, so do not log it
 			responseBody = "<large resposne>"
 		} else {
 			responseBody = string(payload)
@@ -60,6 +60,7 @@ type LoadBalancerHTTPClient struct {
 	Transport      *transport.Transport
 	BeforeHooks    []BeforeHTTPHook
 	AfterHooks     []AfterHTTHook
+	ClientConfig   config.ClientConfig
 }
 
 //NewHTTPLoadBalancerClient ...
@@ -89,6 +90,7 @@ func NewHTTPLoadBalancerClient(clientConfig config.ClientConfig, lb loadbalancer
 		Transport:              trans,
 		BeforeHooks:            make([]BeforeHTTPHook, 0),
 		AfterHooks:             []AfterHTTHook{loggerAfterHook},
+		ClientConfig:			clientConfig,
 	}
 	//load balancer context correlate with http client
 	loadBalancerClient.Client = httpClient
@@ -122,7 +124,33 @@ func (c *LoadBalancerHTTPClient) Execute(ctx context.Context, request client.Req
 
 //ExecuteHTTP Do not Directly Use...
 func (c *LoadBalancerHTTPClient) ExecuteHTTP(ctx context.Context, request *HTTPRequest, requestConfig config.ClientConfig) (*HTTPResponse, error) {
-	response, err := c.Client.Do(request.GetRawRequest())
+	var (
+		response *http.Response
+		err error
+	)
+	//if requestConfig set connect timeout or readwrite timeout or request timeout
+	//which is different from the clientConfig's
+	//we need create a request level http.Client
+	if requestConfig != nil && (requestConfig.GetPropertyAsDuration(config.ConnectTimeout, config.DefaultConnectTimeout) !=
+		c.ClientConfig.GetPropertyAsDuration(config.ConnectTimeout, config.DefaultConnectTimeout) ||
+		requestConfig.GetPropertyAsDuration(config.ReadWriteTimeout, config.DefaultReadWriteTimeout) !=
+		c.ClientConfig.GetPropertyAsDuration(config.ReadWriteTimeout, config.DefaultReadWriteTimeout) ||
+		requestConfig.GetPropertyAsDuration(config.RequestTimeout, config.DefaultRequestTimeout) !=
+		c.ClientConfig.GetPropertyAsDuration(config.RequestTimeout, config.DefaultRequestTimeout)){
+		//create transport
+		trans := &transport.Transport{
+			ConnectTimeout:   requestConfig.GetPropertyAsDuration(config.ConnectTimeout, config.DefaultConnectTimeout),
+			ReadWriteTimeout: requestConfig.GetPropertyAsDuration(config.ReadWriteTimeout, config.DefaultReadWriteTimeout),
+			RequestTimeout:   requestConfig.GetPropertyAsDuration(config.RequestTimeout, config.DefaultRequestTimeout),
+		}
+		//create request's http.client
+		requestClient := &http.Client{
+			Transport: trans,
+		}
+		response, err = requestClient.Do(request.GetRawRequest())
+	} else {
+		response, err = c.Client.Do(request.GetRawRequest())
+	}
 	if err != nil {
 		return nil, errors.ConvertError(err)
 	}
@@ -132,11 +160,6 @@ func (c *LoadBalancerHTTPClient) ExecuteHTTP(ctx context.Context, request *HTTPR
 		return nil, errors.NewClientError(errors.ServerThrottled, fmt.Errorf("http status code = %d", response.StatusCode))
 	}
 	return NewHTTPResponse(response), nil
-}
-
-//Shutdown ...
-func (c *LoadBalancerHTTPClient) Shutdown() {
-	c.Transport.Close()
 }
 
 //RegisterBeforeHook ...

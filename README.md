@@ -347,6 +347,12 @@ TokenBucket(令牌桶)和LeakyBucket(漏桶)三种限流算法。使用示例如
     requestConfig.Set("MaxAutoRetries", 1)
     //如果在出错，重新选取机器后再请求一次
     requestConfig.Set("MaxAutoRetriesNextServer", 1)
+    //设置请求的连接超时100ms
+    requestConfig.Set("ConnectTimeout", 100 * time.MilliSecond)
+    //设置请求的读写超时
+    requestConfig.Set("ReadWriteTimeout", 200 * time.MilliSecond)
+    //设置整个请求的超时
+    requestConfig.Set("RequestTimeout", 300 * time.MilliSecond)
     
     //Step 4:
     //请求
