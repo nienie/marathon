@@ -43,15 +43,13 @@ func (o *SmoothWeightedRoundRobinRule)ChooseFromLoadBalancer(lb LoadBalancer, ke
         return nil
     }
 
-    //upServerList has changed, so refresh the server list and it's weight
     o.RLock()
-    if !server.CompareServerList(o.Servers, upList) {
-        o.RUnlock()
+    isEqual := server.CompareServerList(o.Servers, upList)
+    o.RUnlock()
+    //upServerList has changed, so refresh the server list and weights
+    if !isEqual {
         o.RefreshServersAndWeights(upList)
-    } else {
-        o.RUnlock()
     }
-
     o.RLock()
     s := o.Weighted.Next()
     o.RUnlock()

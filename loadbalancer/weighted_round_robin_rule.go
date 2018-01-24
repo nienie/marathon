@@ -44,11 +44,11 @@ func (o *WeightedRoundRobinRule)ChooseFromLoadBalancer(lb LoadBalancer, key inte
     }
 
     o.RLock()
-    if !server.CompareServerList(o.Servers, upList) {
-        o.RUnlock()
+    isEqual := server.CompareServerList(o.Servers, upList)
+    o.RUnlock()
+    //upServerList has changed, so refresh the server list and weights
+    if !isEqual {
         o.RefreshServersAndWeights(upList)
-    } else {
-        o.RUnlock()
     }
 
     o.RLock()
