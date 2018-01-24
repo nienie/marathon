@@ -126,7 +126,7 @@ func (o *BaseLoadBalancer) setupPingTask() {
 	}
 	o.healthCheckTimer = timer.NewTimer(o.name + "_HealthCheckTask")
 	o.healthCheckTimer.Schedule(o.runPingTask, o.pingInterval, 0)
-	//o.runPingTask()
+	o.runPingTask()
 }
 
 func (o *BaseLoadBalancer) runPingTask() {
@@ -256,20 +256,20 @@ func (o *BaseLoadBalancer) AddServer(svr *server.Server) {
 }
 
 //SetServerList Set the list of servers used as the server pool. This overrides existing server list.
-func (o *BaseLoadBalancer) SetServerList(serverList []*server.Server) {
+func (o *BaseLoadBalancer) SetServerList(servers []*server.Server) {
 	var (
 		allServers  = make([]*server.Server, 0)
 		listChanged bool
 	)
 
-	for _, svr := range serverList {
+	for _, svr := range servers {
 		if svr == nil {
 			continue
 		}
 		allServers = append(allServers, svr)
 	}
 
-	if server.CompareServerList(o.allServersList, allServers) {
+	if !server.CompareServerList(o.allServersList, allServers) {
 		listChanged = true
 		if o.changeListeners != nil && len(o.changeListeners) > 0 {
 			oldList := server.CloneServerList(o.allServersList)
