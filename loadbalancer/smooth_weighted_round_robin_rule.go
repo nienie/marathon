@@ -50,9 +50,9 @@ func (o *SmoothWeightedRoundRobinRule)ChooseFromLoadBalancer(lb LoadBalancer, ke
     if !isEqual {
         o.RefreshServersAndWeights(upList)
     }
-    o.RLock()
+    o.Lock()
     s := o.Weighted.Next()
-    o.RUnlock()
+    o.Unlock()
     if s == nil {
         return nil
     }
