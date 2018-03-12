@@ -47,10 +47,14 @@ func (b *TokenBucket) run() {
 		case <-b.stop:
 			return
 		case <-t.C:
+			full := false
 			for i := 0; i < b.fillCount; i++ {
 				select {
 				case b.ch <- struct{}{}:
 				default:
+					full = true
+				}
+				if full {
 					break
 				}
 			}
