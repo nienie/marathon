@@ -66,7 +66,8 @@ func (l *defaultLogger) Debugf(ctx context.Context, format string, args ...inter
 		timestamp := time.Now().Format("2006-01-02T15:04:05.000")
 		a := []interface{}{timestamp, caller}
 		a = append(a, args...)
-		log.Printf("[DEBUG] [%s] [%s] "+format, a...)	}
+		log.Printf("[DEBUG] [%s] [%s] "+format, a...)
+	}
 }
 
 //Infof ...
@@ -87,7 +88,8 @@ func (l *defaultLogger) Warnf(ctx context.Context, format string, args ...interf
 		timestamp := time.Now().Format("2006-01-02T15:04:05.000")
 		a := []interface{}{timestamp, caller}
 		a = append(a, args...)
-		log.Printf("[WARN] [%s] [%s] "+format, a...)	}
+		log.Printf("[WARN] [%s] [%s] "+format, a...)
+	}
 }
 
 //Errorf ...
